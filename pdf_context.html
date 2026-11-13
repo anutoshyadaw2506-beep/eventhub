@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EventHub — Complete Project Context & Viva Presentation Master Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    
+    @page {
+      size: A4 portrait;
+      margin: 15mm 15mm 15mm 15mm;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #0F172A;
+      line-height: 1.5;
+      font-size: 11pt;
+      margin: 0;
+      padding: 0;
+      background: #FFFFFF;
+    }
+    
+    h1, h2, h3, h4 {
+      color: #0F172A;
+      font-weight: 800;
+      margin-top: 0;
+      letter-spacing: -0.02em;
+    }
+    
+    h1 { font-size: 24pt; margin-bottom: 6px; }
+    h2 { font-size: 16pt; margin-bottom: 8px; border-bottom: 2px solid #E2E8F0; padding-bottom: 4px; margin-top: 18px; }
+    h3 { font-size: 13pt; margin-bottom: 6px; margin-top: 14px; color: #0284C7; }
+    
+    p { margin-top: 0; margin-bottom: 10px; }
+    
+    .page-break {
+      page-break-after: always;
+    }
+    
+    .badge {
+      display: inline-block;
+      font-size: 8.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      background: #E0F2FE;
+      color: #0369A1;
+      border: 1px solid #BAE6FD;
+      margin-bottom: 10px;
+    }
+    
+    .meta-box {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      font-size: 10pt;
+    }
+    
+    .grid-2 {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    
+    .card {
+      flex: 1;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 14px;
+    }
+    
+    .card-title {
+      font-weight: 700;
+      font-size: 11pt;
+      margin-bottom: 8px;
+      color: #0F172A;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 14px;
+      font-size: 9.5pt;
+    }
+    
+    th, td {
+      border: 1px solid #CBD5E1;
+      padding: 7px 10px;
+      text-align: left;
+    }
+    
+    th {
+      background: #F1F5F9;
+      font-weight: 700;
+      color: #334155;
+    }
+    
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9pt;
+      background: #F1F5F9;
+      color: #0369A1;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid #E2E8F0;
+    }
+    
+    pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5pt;
+      background: #0F172A;
+      color: #F8FAFC;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    
+    .callout {
+      background: #F0FDF4;
+      border-left: 4px solid #16A34A;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      margin: 12px 0;
+      font-size: 10pt;
+    }
+    
+    .callout-title {
+      font-weight: 700;
+      color: #15803D;
+      margin-bottom: 3px;
+    }
+    
+    .script-box {
+      background: #F8FAFC;
+      border-left: 4px solid #0284C7;
+      padding: 8px 12px;
+      margin: 6px 0 12px 0;
+      font-size: 9.5pt;
+      font-style: italic;
+      color: #334155;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: Executive Overview & Problem Statement -->
+  <span class="badge">Master Defense Document</span>
+  <h1>EventHub: Full-Stack Project Context & Viva Presentation Guide</h1>
+  <p style="font-size: 13pt; color: #0284C7; font-weight: 600; margin-bottom: 12px;">
+    A Serverless, Zero-Friction Event Management & Live QR Ticketing Platform
+  </p>
+
+  <div class="meta-box">
+    <strong>Author:</strong> Anutosh Yadaw &bull; <strong>Tech Stack:</strong> React 18, FastAPI (Python 3.12), Supabase PostgreSQL 17, Brevo SMTP, Vercel Serverless<br>
+    <strong>Live Production Web App:</strong> <a href="https://eventhub-delta-two.vercel.app">https://eventhub-delta-two.vercel.app</a><br>
+    <strong>Interactive Swagger API Docs:</strong> <a href="https://eventhub-delta-two.vercel.app/docs">https://eventhub-delta-two.vercel.app/docs</a><br>
+    <strong>GitHub Repository:</strong> <a href="https://github.com/anutoshyadaw2506-beep/eventhub">https://github.com/anutoshyadaw2506-beep/eventhub</a>
+  </div>
+
+  <h2>1. Problem Statement & Motivation</h2>
+  <p>
+    Traditional event management platforms suffer from four critical architectural and usability flaws:
+  </p>
+  <div class="grid-2">
+    <div class="card" style="border-left: 4px solid #DC2626;">
+      <div class="card-title" style="color: #DC2626;">The Friction in Existing Solutions</div>
+      <ul style="padding-left: 18px; margin: 0; font-size: 9.5pt;">
+        <li><strong>Mandatory Account Walls:</strong> Forcing casual attendees to create passwords and verify accounts leads to over 40% checkout abandonment.</li>
+        <li><strong>High Infrastructure Costs:</strong> Persistent 24/7 cloud servers (AWS EC2, Railway, Render) incur monthly fees even when no events are active.</li>
+        <li><strong>Check-in Bottlenecks:</strong> Manual paper lists cause long door queues, and static PDF passes permit duplicate entry fraud.</li>
+        <li><strong>Rigid Form Schemas:</strong> Event organizers cannot ask custom questions without modifying database tables.</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left: 4px solid #16A34A;">
+      <div class="card-title" style="color: #16A34A;">The EventHub Solution</div>
+      <ul style="padding-left: 18px; margin: 0; font-size: 9.5pt;">
+        <li><strong>Zero-Login Guest RSVP:</strong> Attendees enter Name, Email, and dynamic answers in 15 seconds with zero password friction.</li>
+        <li><strong>100% Serverless on Vercel:</strong> Runs as on-demand Python ASGI Lambdas with zero idle cost ($0 per month).</li>
+        <li><strong>Sub-Second Camera Scanner:</strong> WebRTC camera decoder with atomic database-enforced duplicate scan prevention.</li>
+        <li><strong>Dynamic JSONB Form Builder:</strong> Organizers add custom fields on-the-fly without database alterations.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>2. System Design & Three-Tier Serverless Architecture</h2>
+  <p>
+    EventHub decouples presentation, compute, and persistence across three serverless tiers:
+  </p>
+  <table style="margin-top: 4px;">
+    <thead>
+      <tr>
+        <th style="width: 20%;">Tier</th>
+        <th style="width: 25%;">Technology</th>
+        <th>Role & Key Responsibilities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Tier 1: Client</strong></td>
+        <td>React 18 + Vite (Tailwind CSS)</td>
+        <td>Single Page Application (SPA) served via Vercel Edge CDN with sub-50ms worldwide asset delivery. Integrates <code>html5-qrcode</code> for WebRTC smartphone camera scanning.</td>
+      </tr>
+      <tr>
+        <td><strong>Tier 2: Compute</strong></td>
+        <td>FastAPI (Python 3.12 ASGI)</td>
+        <td>Serverless Lambda handler in AWS <code>iad1</code>. Executes Pydantic data validation, generates in-memory vector QR codes, and dispatches background emails.</td>
+      </tr>
+      <tr>
+        <td><strong>Tier 3: Persistence</strong></td>
+        <td>Supabase PostgreSQL 17</td>
+        <td>Enterprise relational database with ACID capacity locks, JSONB column support, and connection pooling via IPv4 PgBouncer (Port 6543).</td>
+      </tr>
+      <tr>
+        <td><strong>Tier 3: Delivery</strong></td>
+        <td>Brevo SMTP Relay</td>
+        <td>Dispatches transactional email passes with inline embedded MIME/CID QR codes directly to attendee inboxes for free.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- PAGE 2: Database Schema & Entity Relationships -->
+  <h2>3. Relational Database Schema & Data Integrity</h2>
+  <p>
+    Built on PostgreSQL 17 via Supabase with relational integrity, foreign key cascading, and JSONB dynamic fields:
+  </p>
+
+  <div class="card" style="margin-bottom: 12px;">
+    <div class="card-title">Core Entities Overview</div>
+    <ul style="font-size: 9.5pt; padding-left: 20px; margin: 0;">
+      <li><code>profiles</code>: Stores organizers and administrators (UUID primary key, full name, role, avatar URL).</li>
+      <li><code>categories</code>: Taxonomy system (BigInt primary key, unique category name, unique URL slug).</li>
+      <li><code>events</code>: Event metadata (Foreign key to <code>profiles.id</code> and <code>categories.id</code>, title, description, venue, start/end timestamps, seat capacity, admission fee, banner URL, status, and <code>custom_fields</code> JSONB array).</li>
+      <li><code>registrations</code>: Ticket records. <strong>Crucial Viva Point:</strong> <code>user_id</code> is <strong>NULLABLE</strong> to allow guest checkouts. Stores <code>attendee_name</code>, <code>attendee_email</code>, <code>amount_paid</code>, <code>form_responses</code> (JSONB), and a unique indexed <code>ticket_token</code>.</li>
+      <li><code>attendance</code>: Door verification records. Has a <strong>UNIQUE foreign key</strong> on <code>registration_id</code>, guaranteeing at the database engine level that a pass cannot be checked in more than once.</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">Database Fraud Prevention Rationale for Viva</div>
+    Instead of encoding internal database IDs into QR codes, EventHub generates a high-entropy random string (<code>ticket_token</code>, e.g., <code>TK-eZ3aG1Cu...</code>). When scanned, the backend verifies that the token belongs to the event and executes an atomic insert into <code>attendance</code>. If scanned a second time, PostgreSQL raises a unique constraint violation, resulting in an HTTP <code>409 Conflict</code>.
+  </div>
+
+  <h2>4. Core REST API Endpoints</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Method</th>
+        <th>Endpoint</th>
+        <th>Auth</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>POST</code></td>
+        <td><code>/api/v1/events/{id}/register</code></td>
+        <td>Public (Guest)</td>
+        <td>Registers attendee with zero login, reserves seat atomically, and enqueues Brevo email.</td>
+      </tr>
+      <tr>
+        <td><code>GET</code></td>
+        <td><code>/api/v1/tickets/{id}</code></td>
+        <td>Public</td>
+        <td>Public digital ticket pass view with dynamically rendered high-res vector QR code.</td>
+      </tr>
+      <tr>
+        <td><code>POST</code></td>
+        <td><code>/api/v1/check-in/scan</code></td>
+        <td>Organiser</td>
+        <td>Verifies ticket token via camera scan; returns 200 OK or 409 Conflict if already checked in.</td>
+      </tr>
+      <tr>
+        <td><code>GET</code></td>
+        <td><code>/api/v1/events</code></td>
+        <td>Public</td>
+        <td>Lists published events with search queries, category filters, and venue filtering.</td>
+      </tr>
+      <tr>
+        <td><code>POST</code></td>
+        <td><code>/api/v1/events</code></td>
+        <td>Organiser</td>
+        <td>Creates a new event with schedule, seat limits, venue, fee, and custom form questions.</td>
+      </tr>
+      <tr>
+        <td><code>PATCH</code></td>
+        <td><code>/api/v1/events/{id}</code></td>
+        <td>Organiser</td>
+        <td>Updates event details, venue, dates, capacity, fee, or registration questions.</td>
+      </tr>
+      <tr>
+        <td><code>GET</code></td>
+        <td><code>/api/v1/organiser/events/{id}/registrations</code></td>
+        <td>Organiser</td>
+        <td>Exports attendee list in JSON or downloadable CSV with custom question responses.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- PAGE 3: Technical Challenges & Engineering Solutions -->
+  <h2>5. Critical Technical Challenges Solved</h2>
+  
+  <div class="card" style="margin-bottom: 10px;">
+    <div class="card-title">1. Deploying Full-Stack FastAPI + React on Vercel Serverless ($0 Cost)</div>
+    <p style="font-size: 9.5pt; margin-bottom: 4px;"><strong>Challenge:</strong> Traditional Python backends require persistent 24/7 servers (Gunicorn/Uvicorn on EC2/Railway/Render) incurring continuous monthly costs.</p>
+    <p style="font-size: 9.5pt; margin: 0;"><strong>Solution:</strong> We wrapped FastAPI into an ASGI serverless handler inside <code>api/index.py</code>. Using <code>vercel.json</code>, requests to <code>/api/(.*)</code> are rewritten to the Lambda handler while static assets and <code>/</code> are served by Vercel's global CDN.</p>
+  </div>
+
+  <div class="card" style="margin-bottom: 10px;">
+    <div class="card-title">2. Supabase IPv6 vs. Vercel IPv4 Routing Issue</div>
+    <p style="font-size: 9.5pt; margin-bottom: 4px;"><strong>Challenge:</strong> Supabase direct database host (<code>db.&lt;ref&gt;.supabase.co</code>) only resolves IPv6 AAAA records. Vercel's serverless Lambdas in AWS <code>iad1</code> operate on IPv4-only networks, resulting in immediate connection timeouts.</p>
+    <p style="font-size: 9.5pt; margin: 0;"><strong>Solution:</strong> Routed all database connections through Supabase's IPv4 <strong>Transaction Pooler</strong> (<code>aws-0-ap-south-1.pooler.supabase.com:6543</code>), enabling seamless IPv4 database access.</p>
+  </div>
+
+  <div class="card" style="margin-bottom: 10px;">
+    <div class="card-title">3. PgBouncer Prepared Statement Collision with AsyncPG</div>
+    <p style="font-size: 9.5pt; margin-bottom: 4px;"><strong>Challenge:</strong> Python's <code>asyncpg</code> driver caches prepared statements by default (<code>__asyncpg_stmt_1__</code>). Because PgBouncer multiplexes connections across lambdas, asyncpg crashed with <code>prepared statement already exists</code>.</p>
+    <p style="font-size: 9.5pt; margin: 0;"><strong>Solution:</strong> In <code>backend/app/database/session.py</code>, we explicitly disabled statement caching for PgBouncer: <code>connect_args={"statement_cache_size": 0, "prepared_statement_cache_size": 0}</code>.</p>
+  </div>
+
+  <div class="card" style="margin-bottom: 10px;">
+    <div class="card-title">4. Universal Inline QR Code Email Delivery</div>
+    <p style="font-size: 9.5pt; margin-bottom: 4px;"><strong>Challenge:</strong> Modern email clients (Gmail, Outlook) block external image URLs or route passes to spam.</p>
+    <p style="font-size: 9.5pt; margin: 0;"><strong>Solution:</strong> The backend generates vector QR code PNG bytes in memory and embeds them as inline <strong>MIME Multipart Related CID</strong> attachments via Brevo SMTP relay, ensuring passes render immediately in all inboxes.</p>
+  </div>
+
+  <h2>6. Technology Stack Justification (Viva Q&amp;A)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Chosen Tech</th>
+        <th>Why Chosen over Alternatives?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Backend</strong></td>
+        <td>FastAPI (Python)</td>
+        <td>Native <code>async/await</code> concurrency for I/O; automatic Pydantic input validation; self-generating Swagger documentation. Far faster and lighter than Django/Flask.</td>
+      </tr>
+      <tr>
+        <td><strong>Database</strong></td>
+        <td>PostgreSQL 17</td>
+        <td>Strict ACID transaction locks prevent ticket overselling; relational integrity handles tickets and attendance; native JSONB columns store dynamic form questions flexibly.</td>
+      </tr>
+      <tr>
+        <td><strong>Frontend</strong></td>
+        <td>React 18 + Vite</td>
+        <td>Modular component lifecycle, instant Vite HMR, and small production bundle size. Avoided heavy Next.js SSR overhead since the backend is decoupled.</td>
+      </tr>
+      <tr>
+        <td><strong>Email</strong></td>
+        <td>Brevo SMTP</td>
+        <td>Free 300 emails/day to any inbox without paid sandboxes or domain authentication gates.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- PAGE 4: 8-Slide Presentation Script & Viva Cheatsheet -->
+  <h2>7. Slide-by-Slide Viva Presentation Script</h2>
+
+  <p><strong>Slide 1: Title &amp; Introduction</strong></p>
+  <div class="script-box">
+    "Respected examiners, good morning. Today I am proud to present EventHub—a modern, full-stack event management and real-time ticketing platform. EventHub was built to eliminate attendee registration friction and expensive server infrastructure. It is deployed 100% serverless on Vercel with PostgreSQL, dynamic custom forms, automated email ticket delivery, and real-time camera QR check-ins."
+  </div>
+
+  <p><strong>Slide 2: Problem Statement &amp; Solution</strong></p>
+  <div class="script-box">
+    "Existing platforms enforce mandatory password creation for casual attendees, causing over 40% checkout abandonment. Furthermore, running 24/7 cloud servers incurs continuous costs. EventHub solves this: guests register in 15 seconds without accounts, organizers build custom questions dynamically, and the entire app scales serverless from zero at $0 idle cost."
+  </div>
+
+  <p><strong>Slide 3: System Design &amp; Three-Tier Architecture</strong></p>
+  <div class="script-box">
+    "Our architecture decouples presentation, compute, and persistence: React 18 SPA served via Vercel Edge CDN for sub-50ms caching; FastAPI running inside on-demand AWS Lambda functions validating inputs via Pydantic; and PostgreSQL 17 on Supabase multiplexed through an IPv4 PgBouncer transaction pooler on port 6543."
+  </div>
+
+  <p><strong>Slide 4: Dual User Journeys</strong></p>
+  <div class="script-box">
+    "For attendees, there is zero friction: find an event, enter name and email, and receive an instant on-screen QR pass plus an automated email pass. For organizers, we built an administrative studio to create events, customize form questions, edit details anytime, and scan passes at the door using any phone camera."
+  </div>
+
+  <p><strong>Slide 5: Database Design &amp; Integrity</strong></p>
+  <div class="script-box">
+    "PostgreSQL 17 was chosen for ACID compliance. Four critical decisions: 1) user_id is nullable in registrations for zero-login guests; 2) ticket_token is a cryptographic random string protecting internal database IDs; 3) attendance.registration_id has a UNIQUE constraint preventing duplicate scans at the database engine level; 4) JSONB columns store dynamic form answers flexibly."
+  </div>
+
+  <p><strong>Slide 6: Technical Challenges Solved</strong></p>
+  <div class="script-box">
+    "We resolved four deep engineering hurdles: converted FastAPI to an ASGI serverless handler on Vercel; solved Supabase IPv6 vs Vercel IPv4 routing using transaction pooling; resolved PgBouncer prepared statement collisions with statement_cache_size=0; and embedded QR codes as inline MIME CID attachments to bypass email client image blocking."
+  </div>
+
+  <p><strong>Slide 7: Tech Stack Comparison</strong></p>
+  <div class="script-box">
+    "We selected FastAPI over Flask/Django for asynchronous I/O and native Swagger docs; PostgreSQL over MongoDB because event ticketing requires atomic capacity locks; and Vercel serverless to guarantee zero idle hosting expenses."
+  </div>
+
+  <p><strong>Slide 8: Live Demonstration &amp; Conclusion</strong></p>
+  <div class="script-box">
+    "EventHub is fully implemented and live in production on Vercel at eventhub-delta-two.vercel.app with open-source code on GitHub. We are now open for faculty questions and live demonstration."
+  </div>
+
+</body>
+</html>
