@@ -59,6 +59,17 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const loginWithGithub = async () => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+    if (error) throw error;
+    return data;
+  };
+
   const signup = async (email, password, fullName, role = 'participant') => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -82,7 +93,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, login, signup, logout, refreshProfile: fetchProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, login, loginWithGithub, signup, logout, refreshProfile: fetchProfile }}>
       {children}
     </AuthContext.Provider>
   );

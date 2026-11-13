@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Lock, Mail, User, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Calendar, Lock, Mail, User, ShieldCheck, AlertCircle, Zap, Github } from 'lucide-react';
 
 export default function SignupPage() {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
-  const { signup } = useAuth();
+  const { signup, login, loginWithGithub } = useAuth();
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('participant'); // 'participant' or 'organiser'
+  const [role, setRole] = useState('participant');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,21 +25,70 @@ export default function SignupPage() {
       await signup(email, password, fullName, role);
       navigate(redirect);
     } catch (err) {
-      setError(err.message || 'Failed to create account.');
+      setError(err.message || 'Failed to create account with Supabase Auth.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickDemo = async (demoEmail, demoPassword) => {
+    setError(null);
+    setLoading(true);
+    try {
+      await login(demoEmail, demoPassword);
+      navigate(redirect);
+    } catch (err) {
+      setError(err.message || 'Failed to sign in with demo account.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGithub = async () => {
+    setError(null);
+    try {
+      await loginWithGithub();
+    } catch (err) {
+      setError(err.message || 'GitHub OAuth failed.');
     }
   };
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-xl">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-purple-200">
             <Calendar className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-extrabold text-slate-900">Create Account</h2>
-          <p className="text-xs text-slate-500 mt-1">Join EventHub to discover or organise events</p>
+          <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+            <ShieldCheck className="w-3.5 h-3.5" /> Powered by Supabase Auth
+          </div>
+        </div>
+
+        {/* 1-Click Demo Login Banner */}
+        <div className="mb-6 p-3.5 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl">
+          <p className="text-[11px] font-bold text-purple-900 flex items-center gap-1 mb-2.5">
+            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Instant 1-Click Demo Login:
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('organiser@eventhub.com', 'Password123!')}
+              disabled={loading}
+              className="py-2 px-2.5 bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold rounded-xl transition shadow-sm text-center"
+            >
+              👑 Organiser Demo
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemo('participant@eventhub.com', 'Password123!')}
+              disabled={loading}
+              className="py-2 px-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-[11px] font-bold rounded-xl transition shadow-sm text-center"
+            >
+              🎟️ Participant Demo
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -98,7 +147,7 @@ export default function SignupPage() {
 
           {/* Account Role Selector */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">I want to:</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Account Role</label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -143,9 +192,28 @@ export default function SignupPage() {
             disabled={loading}
             className="w-full mt-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2"
           >
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? 'Creating account in Supabase...' : 'Create Supabase Account'}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200"></div>
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400">
+            <span className="bg-white px-2">Or continue with</span>
+          </div>
+        </div>
+
+        {/* GitHub OAuth Button */}
+        <button
+          type="button"
+          onClick={handleGithub}
+          className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2"
+        >
+          <Github className="w-4 h-4" /> GitHub via Supabase
+        </button>
 
         <div className="mt-8 text-center text-xs text-slate-500">
           Already registered?{' '}
