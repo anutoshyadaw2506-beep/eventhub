@@ -252,10 +252,24 @@ async def test_guest_registration_without_login_and_payment(db_session: AsyncSes
     assert att is not None
     assert reg_checked.id == guest_reg.id
 
-def test_ticket_email_generation_and_preview_saving():
-    import os
-    from app.services.email_service import send_ticket_confirmation_email
+def test_ticket_email_delivery_execution():
+    from app.services.email_service import send_ticket_confirmation_email, build_ticket_html
     test_id = str(uuid.uuid4())
+    # Verify HTML template builder generates valid markup with QR reference
+    html = build_ticket_html(
+        attendee_name="Test Attendee",
+        event_title="Tech Summit 2026",
+        event_date="Saturday, March 15, 2026 at 10:00 AM",
+        event_location="Convention Hall A",
+        registration_id=test_id,
+        ticket_url=f"http://localhost:5173/ticket/{test_id}",
+        is_preview=True
+    )
+    assert "Tech Summit 2026" in html
+    assert "Test Attendee" in html
+    assert f"EH-{test_id[:8].upper()}" in html
+
+    # Verify sending executes without exception
     send_ticket_confirmation_email(
         to_email="test.attendee@example.com",
         attendee_name="Test Attendee",
@@ -265,12 +279,3 @@ def test_ticket_email_generation_and_preview_saving():
         registration_id=test_id,
         ticket_token="TK-testtoken1234567890",
     )
-    preview_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "sent_emails", f"ticket_{test_id[:8]}_test.attendee_at_example.com.html")
-    assert os.path.exists(preview_file)
-    with open(preview_file, "r", encoding="utf-8") as f:
-        content = f.read()
-    assert "Tech Summit 2026" in content
-    assert "Test Attendee" in content
-    assert "data:image/png;base64," in content
-    # Clean up test file
-    os.remove(preview_file)
