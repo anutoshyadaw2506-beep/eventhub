@@ -8,9 +8,21 @@ class Settings(BaseSettings):
     SUPABASE_URL: str
     SUPABASE_ANON_KEY: str
     SUPABASE_JWKS_URL: str
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
-    PROJECT_ENV: str = "development"
-    FRONTEND_URL: str = "http://localhost:5173"
+    CORS_ORIGINS: str = "*"
+    PROJECT_ENV: str = "production"
+    FRONTEND_URL: str = "https://eventhub-delta-two.vercel.app"
+
+    @property
+    def resolved_frontend_url(self) -> str:
+        vercel_prod = os.getenv("VERCEL_PROJECT_PRODUCTION_URL")
+        if vercel_prod:
+            return f"https://{vercel_prod}".rstrip("/")
+        vercel_url = os.getenv("VERCEL_URL")
+        if vercel_url:
+            return f"https://{vercel_url}".rstrip("/")
+        if self.PROJECT_ENV == "production" or not self.FRONTEND_URL or "localhost" in self.FRONTEND_URL:
+            return "https://eventhub-delta-two.vercel.app"
+        return self.FRONTEND_URL.rstrip("/")
 
     # Email & SMTP Settings (100% Free via Brevo, Gmail SMTP or Resend)
     SMTP_HOST: str = "smtp-relay.brevo.com"

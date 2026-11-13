@@ -132,7 +132,7 @@ def send_ticket_confirmation_email(
         logger.warning(f"Skipping ticket email: invalid address '{to_email}'")
         return
 
-    frontend_url = settings.FRONTEND_URL.rstrip("/")
+    frontend_url = settings.resolved_frontend_url.rstrip("/")
     ticket_url = f"{frontend_url}/ticket/{registration_id}"
 
     # 1. Generate QR Code bytes
