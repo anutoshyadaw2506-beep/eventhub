@@ -12,14 +12,16 @@ class Settings(BaseSettings):
     PROJECT_ENV: str = "development"
     FRONTEND_URL: str = "http://localhost:5173"
 
-    # Email & SMTP Settings (100% Free via Gmail SMTP or Resend)
-    SMTP_HOST: str = "smtp.gmail.com"
+    # Email & SMTP Settings (100% Free via Brevo, Gmail SMTP or Resend)
+    SMTP_HOST: str = "smtp-relay.brevo.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASS: str = ""
     SMTP_FROM: str = ""
     SMTP_USE_TLS: bool = True
     RESEND_API_KEY: str = ""
+    BREVO_API_KEY: str = ""
+    BREVO_SENDER_EMAIL: str = "anutosh.yadaw2506@gmail.com"
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env"),

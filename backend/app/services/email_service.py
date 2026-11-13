@@ -143,8 +143,55 @@ def send_ticket_confirmation_email(
     smtp_pass = settings.SMTP_PASS.strip()
     smtp_from = settings.SMTP_FROM.strip() or smtp_user or "tickets@eventhub.local"
 
-    # Option A: Send via SMTP (Gmail 100% Free / 500 emails/day)
-    if smtp_user and smtp_pass:
+    # Option A: Send via Brevo REST API (300 free emails/day)
+    if settings.BREVO_API_KEY.strip():
+        try:
+            import base64
+            qr_b64 = base64.b64encode(qr_bytes).decode("utf-8")
+            html_content = build_ticket_html(
+                attendee_name=attendee_name,
+                event_title=event_title,
+                event_date=event_date,
+                event_location=event_location,
+                registration_id=registration_id,
+                ticket_url=ticket_url,
+                is_preview=False
+            )
+            sender_email = settings.BREVO_SENDER_EMAIL.strip() or "anutosh.yadaw2506@gmail.com"
+            resp = httpx.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={
+                    "api-key": settings.BREVO_API_KEY.strip(),
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                json={
+                    "sender": {"name": "EventHub Tickets", "email": sender_email},
+                    "to": [{"email": to_email, "name": attendee_name}],
+                    "subject": f"Your Ticket: {event_title} 🎟️",
+                    "htmlContent": html_content,
+                    "attachment": [
+                        {
+                            "name": f"EventPass_QR_{registration_id[:8]}.png",
+                            "content": qr_b64
+                        }
+                    ]
+                },
+                timeout=12.0
+            )
+            if resp.status_code in [200, 201]:
+                logger.info(f"Successfully sent ticket pass email via Brevo to {to_email}")
+                print(f"📧 [EMAIL DELIVERED] Sent QR ticket for '{event_title}' to {to_email} via Brevo")
+                return
+            else:
+                logger.error(f"Brevo API error: {resp.text}")
+                print(f"⚠️ [BREVO ERROR] Status {resp.status_code}: {resp.text}")
+        except Exception as e:
+            logger.error(f"Failed to send email via Brevo to {to_email}: {e}")
+            print(f"⚠️ [BREVO ERROR] {e}")
+
+    # Option B: Send via SMTP (Brevo or Gmail SMTP)
+    elif smtp_user and smtp_pass:
         try:
             msg = MIMEMultipart("related")
             msg["Subject"] = f"Your Ticket: {event_title} 🎟️"
