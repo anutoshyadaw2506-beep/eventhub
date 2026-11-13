@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar, Image, ArrowLeft, AlertCircle, UploadCloud } from 'lucide-react';
+import { ArrowLeft, AlertCircle, UploadCloud } from 'lucide-react';
 import { api } from '../services/api';
 import { supabase } from '../services/supabase';
 
@@ -97,45 +97,43 @@ export default function CreateEventPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <Link to="/organiser" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 mb-6 transition">
+      <Link to="/organiser" className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 mb-6 transition">
         <ArrowLeft className="w-4 h-4" /> Back to Dashboard
       </Link>
 
-      <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-100 shadow-xl">
-        <div className="mb-8">
-          <h1 className="text-2xl font-extrabold text-slate-900">Create New Event</h1>
+      <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm">
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Create New Event</h1>
           <p className="text-xs text-slate-500 mt-1">Publish an event to begin accepting registrations & issuing tickets</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 flex items-center gap-2">
+          <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Title */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Event Title *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Event Title *</label>
             <input
               type="text"
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="e.g. Annual Campus Hackathon 2026"
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+              className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
             />
           </div>
 
-          {/* Category & Fee */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Category</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Category</label>
               <select
                 value={formData.category_id}
                 onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
@@ -144,7 +142,7 @@ export default function CreateEventPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Entry Fee (₹)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Entry Fee (₹)</label>
               <input
                 type="number"
                 min="0"
@@ -152,93 +150,90 @@ export default function CreateEventPage() {
                 value={formData.fee}
                 onChange={(e) => setFormData({ ...formData, fee: e.target.value })}
                 placeholder="0.00 (Free)"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
           </div>
 
-          {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Description *</label>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">Description *</label>
             <textarea
               required
               rows={4}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Provide event details, schedule, requirements, and what attendees should bring..."
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white leading-relaxed"
+              placeholder="Provide event details, schedule, and requirements..."
+              className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500 leading-relaxed"
             />
           </div>
 
-          {/* Venue & Capacity */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Venue Location *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Venue Location *</label>
               <input
                 type="text"
                 required
                 value={formData.venue}
                 onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                placeholder="e.g. Main Auditorium, Block C"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                placeholder="e.g. Main Auditorium"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Seat Capacity *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Seat Capacity *</label>
               <input
                 type="number"
                 required
                 min="1"
                 value={formData.capacity}
                 onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
           </div>
 
-          {/* Dates & Deadlines */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Start Time *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Start Time *</label>
               <input
                 type="datetime-local"
                 required
                 value={formData.start_time}
                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">End Time *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">End Time *</label>
               <input
                 type="datetime-local"
                 required
                 value={formData.end_time}
                 onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Registration Closes *</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Registration Closes *</label>
               <input
                 type="datetime-local"
                 required
                 value={formData.registration_deadline}
                 onChange={(e) => setFormData({ ...formData, registration_deadline: e.target.value })}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
               />
             </div>
           </div>
 
-          {/* Poster Upload to Supabase Storage */}
+          {/* Poster Upload */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Event Poster (Optional)</label>
-            <div className="flex items-center gap-4">
-              <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
-                <UploadCloud className="w-4 h-4 text-purple-600" />
+            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Event Poster (Optional)</label>
+            <div className="flex items-center gap-3">
+              <label className="cursor-pointer inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition">
+                <UploadCloud className="w-4 h-4 text-sky-600" />
                 {uploadingImage ? 'Uploading poster...' : 'Choose File'}
                 <input
                   type="file"
@@ -249,7 +244,7 @@ export default function CreateEventPage() {
                 />
               </label>
               {formData.banner_url && (
-                <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                <span className="text-xs text-emerald-600 font-medium">
                   ✓ Poster uploaded
                 </span>
               )}
@@ -258,7 +253,7 @@ export default function CreateEventPage() {
               <img
                 src={formData.banner_url}
                 alt="Banner preview"
-                className="mt-3 w-40 h-24 object-cover rounded-xl border border-slate-200"
+                className="mt-3 w-40 h-24 object-cover rounded-lg border border-slate-200"
               />
             )}
           </div>
@@ -266,9 +261,9 @@ export default function CreateEventPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2"
+            className="w-full mt-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-xs rounded-lg transition shadow-sm"
           >
-            {loading ? 'Creating draft...' : 'Create Event Draft'}
+            {loading ? 'Creating event...' : 'Create Event'}
           </button>
         </form>
       </div>
