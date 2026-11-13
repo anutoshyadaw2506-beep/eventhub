@@ -10,6 +10,8 @@ export default function TicketViewPage() {
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState(null);
 
   useEffect(() => {
     loadTicket();
@@ -24,6 +26,21 @@ export default function TicketViewPage() {
       setError(err.message || 'Failed to load ticket');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!ticket?.registration_id) return;
+    setResending(true);
+    setResendMsg(null);
+    try {
+      await api.resendTicketEmail(ticket.registration_id, ticket.attendee_email);
+      setResendMsg('Ticket pass resent to your inbox!');
+      setTimeout(() => setResendMsg(null), 4000);
+    } catch (err) {
+      setResendMsg('Could not resend: ' + (err.message || 'Error'));
+    } finally {
+      setResending(false);
     }
   };
 
@@ -68,6 +85,29 @@ export default function TicketViewPage() {
       </div>
 
       {/* Ticket Pass Container */}
+      {ticket.attendee_email && (
+        <div className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded-lg text-xs text-sky-800 flex items-center justify-between print:hidden">
+          <div className="flex items-center gap-2 truncate mr-2">
+            <Mail className="w-4 h-4 text-sky-600 shrink-0" />
+            <span className="truncate">Pass sent to: <strong className="font-semibold text-slate-900">{ticket.attendee_email}</strong></span>
+          </div>
+          <button
+            onClick={handleResendEmail}
+            disabled={resending}
+            className="text-[11px] font-semibold text-sky-700 hover:text-sky-900 underline shrink-0 disabled:opacity-50"
+          >
+            {resending ? 'Sending...' : 'Resend Email'}
+          </button>
+        </div>
+      )}
+
+      {resendMsg && (
+        <div className="mb-4 p-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-center gap-2 print:hidden">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span>{resendMsg}</span>
+        </div>
+      )}
+
       <div className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm">
         {/* Solid Sky Blue Header */}
         <div className="bg-sky-600 p-6 text-white text-center">

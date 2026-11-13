@@ -82,6 +82,9 @@ export const api = {
   getMyRegistrations: () => request('/me/registrations'),
   cancelRegistration: (registrationId) => request(`/registrations/${registrationId}/cancel`, { method: 'POST' }),
   getTicket: (registrationId) => request(`/tickets/${registrationId}`),
+  resendTicketEmail: (registrationId, email) => request(`/tickets/${registrationId}/resend-email${email ? `?email=${encodeURIComponent(email)}` : ''}`, {
+    method: 'POST'
+  }),
 
   // Check-In (Scanner)
   checkInScan: (eventId, ticketToken) => request('/check-in/scan', {

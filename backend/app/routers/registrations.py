@@ -2,7 +2,7 @@ import csv
 import io
 import uuid
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
@@ -19,19 +19,21 @@ from app.schemas.schemas import (
 )
 from app.services.event_service import register_participant_atomic, calculate_event_analytics
 from app.services.qr_service import generate_qr_code_data_url
+from app.services.email_service import send_ticket_confirmation_email
 
 router = APIRouter(tags=["Registrations & Ticketing"])
 
 @router.post("/events/{event_id}/register", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
 async def register_for_event(
     event_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     reg_in: Optional[RegistrationCreate] = None,
     current_user: Optional[Profile] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Registers an attendee (logged in user or guest) for an event, returning confirmed registration.
-    No login required for attendees.
+    No login required for attendees. Dispatches ticket with QR pass to attendee email in background.
     """
     attendee_name = (reg_in.attendee_name.strip() if reg_in and reg_in.attendee_name else "")
     attendee_email = (reg_in.attendee_email.strip().lower() if reg_in and reg_in.attendee_email else "")
@@ -66,6 +68,23 @@ async def register_for_event(
         .where(Registration.id == registration.id)
     )
     reg_loaded = (await db.execute(stmt)).scalar_one()
+
+    # Queue instant email dispatch with embedded QR pass
+    target_email = attendee_email
+    if not target_email and reg_loaded.user and hasattr(reg_loaded.user, 'email'):
+        target_email = reg_loaded.user.email
+
+    if target_email:
+        background_tasks.add_task(
+            send_ticket_confirmation_email,
+            to_email=target_email,
+            attendee_name=attendee_name or "Valued Attendee",
+            event_title=reg_loaded.event.title,
+            event_date=reg_loaded.event.start_time.strftime("%A, %B %d, %Y at %I:%M %p"),
+            event_location=reg_loaded.event.venue,
+            registration_id=str(reg_loaded.id),
+            ticket_token=reg_loaded.ticket_token,
+        )
     
     res = RegistrationResponse.model_validate(reg_loaded)
     res.is_checked_in = reg_loaded.attendance is not None
@@ -161,6 +180,44 @@ async def get_ticket_details(
         is_checked_in=registration.attendance is not None,
         checked_in_at=registration.attendance.checked_in_at if registration.attendance else None
     )
+
+@router.post("/tickets/{registration_id}/resend-email")
+async def resend_ticket_email_endpoint(
+    registration_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    email: Optional[str] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Resends or sends the ticket pass with scannable QR code to the specified or registered email."""
+    stmt = (
+        select(Registration)
+        .options(
+            selectinload(Registration.event),
+            selectinload(Registration.user)
+        )
+        .where(Registration.id == registration_id)
+    )
+    registration = (await db.execute(stmt)).scalar_one_or_none()
+    if not registration:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
+
+    target_email = email or registration.attendee_email or (registration.user.email if registration.user and hasattr(registration.user, 'email') else None)
+    if not target_email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No email address associated with this ticket")
+
+    p_name = registration.attendee_name or (registration.user.full_name if registration.user else "Attendee")
+
+    background_tasks.add_task(
+        send_ticket_confirmation_email,
+        to_email=target_email.strip().lower(),
+        attendee_name=p_name,
+        event_title=registration.event.title,
+        event_date=registration.event.start_time.strftime("%A, %B %d, %Y at %I:%M %p"),
+        event_location=registration.event.venue,
+        registration_id=str(registration.id),
+        ticket_token=registration.ticket_token,
+    )
+    return {"message": f"Ticket pass dispatched to {target_email}", "email": target_email}
 
 @router.get("/organiser/events/{event_id}/analytics", response_model=EventAnalyticsResponse)
 async def get_event_analytics(
