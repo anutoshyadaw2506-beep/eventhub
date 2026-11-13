@@ -54,7 +54,7 @@ export default function EventsListPage() {
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Explore Events</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Browse upcoming campus meetups, cultural events, hackathons, and sports activities.
+          Browse upcoming conferences, workshops, cultural gatherings, hackathons, and sports events.
         </p>
       </div>
 
