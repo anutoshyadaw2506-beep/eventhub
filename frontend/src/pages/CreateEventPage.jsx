@@ -1,14 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, UploadCloud, Plus, Trash2, ListPlus } from 'lucide-react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { ArrowLeft, AlertCircle, UploadCloud, Plus, Trash2, ListPlus, Edit3, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/api';
 import { supabase } from '../services/supabase';
 
+// Helper to format ISO date string to HTML datetime-local input format (YYYY-MM-DDTHH:MM)
+const formatDateTimeForInput = (isoString) => {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export default function CreateEventPage() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEdit = Boolean(id);
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingEvent, setLoadingEvent] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -21,6 +35,7 @@ export default function CreateEventPage() {
     registration_deadline: '',
     fee: 0.00,
     banner_url: '',
+    status: 'draft',
   });
 
   const [customFields, setCustomFields] = useState([
@@ -33,17 +48,49 @@ export default function CreateEventPage() {
 
   useEffect(() => {
     loadCategories();
-  }, []);
+    if (isEdit) {
+      loadEventForEdit();
+    }
+  }, [id]);
 
   const loadCategories = async () => {
     try {
       const data = await api.getCategories();
       setCategories(data);
-      if (data.length > 0) {
+      if (!isEdit && data.length > 0) {
         setFormData((prev) => ({ ...prev, category_id: data[0].id }));
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const loadEventForEdit = async () => {
+    setLoadingEvent(true);
+    setError(null);
+    try {
+      const event = await api.getEventDetail(id);
+      setFormData({
+        title: event.title || '',
+        description: event.description || '',
+        venue: event.venue || '',
+        category_id: event.category_id || event.category?.id || '',
+        start_time: formatDateTimeForInput(event.start_time),
+        end_time: formatDateTimeForInput(event.end_time),
+        capacity: event.capacity || 50,
+        registration_deadline: formatDateTimeForInput(event.registration_deadline),
+        fee: event.fee || 0.00,
+        banner_url: event.banner_url || '',
+        status: event.status || 'draft',
+      });
+
+      if (Array.isArray(event.custom_fields) && event.custom_fields.length > 0) {
+        setCustomFields(event.custom_fields);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to load event details for editing');
+    } finally {
+      setLoadingEvent(false);
     }
   };
 
@@ -80,6 +127,7 @@ export default function CreateEventPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       const payload = {
@@ -93,14 +141,31 @@ export default function CreateEventPage() {
         custom_fields: customFields,
       };
 
-      await api.createEvent(payload);
-      navigate('/organiser');
+      if (isEdit) {
+        await api.updateEvent(id, payload);
+        setSuccessMessage('Event details successfully updated!');
+        setTimeout(() => {
+          navigate('/organiser');
+        }, 600);
+      } else {
+        await api.createEvent(payload);
+        navigate('/organiser');
+      }
     } catch (err) {
-      setError(err.message || 'Failed to create event');
+      setError(err.message || `Failed to ${isEdit ? 'update' : 'create'} event`);
     } finally {
       setLoading(false);
     }
   };
+
+  if (loadingEvent) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-24 text-center text-xs text-slate-500">
+        <div className="w-8 h-8 border-2 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        Loading event details for editing...
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
@@ -110,14 +175,30 @@ export default function CreateEventPage() {
 
       <div className="bg-white rounded-xl p-8 border border-slate-200 shadow-sm">
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Create New Event</h1>
-          <p className="text-xs text-slate-500 mt-1">Publish an event to begin accepting registrations & issuing tickets</p>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase bg-sky-50 text-sky-700 border border-sky-200/60 mb-2">
+            {isEdit ? <><Edit3 className="w-3 h-3" /> Event Editor</> : <><Plus className="w-3 h-3" /> Organiser Studio</>}
+          </span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">
+            {isEdit ? 'Edit Event Details' : 'Create New Event'}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            {isEdit
+              ? 'Update schedule, venue, seat capacity, admission fee, and attendee registration fields'
+              : 'Publish an event to begin accepting registrations & issuing tickets'}
+          </p>
         </div>
 
         {error && (
           <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{successMessage}</span>
           </div>
         )}
 
@@ -429,9 +510,13 @@ export default function CreateEventPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-medium text-xs rounded-lg transition shadow-sm"
+            className="w-full mt-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-lg transition shadow-sm flex items-center justify-center gap-2"
           >
-            {loading ? 'Creating event...' : 'Create Event'}
+            {loading ? (
+              isEdit ? 'Saving changes...' : 'Creating event...'
+            ) : (
+              isEdit ? <><Edit3 className="w-4 h-4" /> Save Changes</> : <><Plus className="w-4 h-4" /> Create Event</>
+            )}
           </button>
         </form>
       </div>

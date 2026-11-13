@@ -91,6 +91,14 @@ export default function App() {
                 }
               />
               <Route
+                path="/organiser/edit/:id"
+                element={
+                  <ProtectedRoute allowedRoles={['organiser', 'admin']}>
+                    <CreateEventPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/organiser/scan/:eventId"
                 element={
                   <ProtectedRoute allowedRoles={['organiser', 'admin']}>

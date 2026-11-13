@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Shield, ArrowRight, X, CreditCard, Smartphone, ShieldCheck } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Shield, ArrowRight, X, CreditCard, Smartphone, ShieldCheck, Edit3 } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -153,13 +153,24 @@ export default function EventDetailPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-2 mb-3">
-            <span className="bg-sky-50 text-sky-700 text-xs font-semibold px-2.5 py-0.5 rounded">
-              {event.category?.name || 'General'}
-            </span>
-            <span className="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-0.5 rounded uppercase">
-              {event.status}
-            </span>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-sky-50 text-sky-700 text-xs font-semibold px-2.5 py-0.5 rounded">
+                {event.category?.name || 'General'}
+              </span>
+              <span className="bg-slate-100 text-slate-700 text-xs font-medium px-2 py-0.5 rounded uppercase">
+                {event.status}
+              </span>
+            </div>
+
+            {Boolean(profile && (profile.role === 'admin' || event.organiser_id === profile.id)) && (
+              <Link
+                to={`/organiser/edit/${event.id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-xs transition"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-sky-600" /> Edit Event Details
+              </Link>
+            )}
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-4">

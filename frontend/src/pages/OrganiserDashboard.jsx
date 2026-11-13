@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Users, QrCode, BarChart3, Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Calendar, Users, QrCode, BarChart3, Plus, AlertCircle, CheckCircle2, Edit3 } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function OrganiserDashboard() {
@@ -133,6 +133,13 @@ export default function OrganiserDashboard() {
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+                  <Link
+                    to={`/organiser/edit/${evt.id}`}
+                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition flex items-center gap-1.5"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-sky-600" /> Edit
+                  </Link>
+
                   {evt.status === 'draft' && (
                     <button
                       onClick={() => handlePublish(evt.id)}
