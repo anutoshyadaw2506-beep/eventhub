@@ -57,7 +57,12 @@ async def register_for_event(
     # Reload with relations
     stmt = (
         select(Registration)
-        .options(selectinload(Registration.event), selectinload(Registration.attendance))
+        .options(
+            selectinload(Registration.event).selectinload(Event.category),
+            selectinload(Registration.event).selectinload(Event.organiser),
+            selectinload(Registration.attendance),
+            selectinload(Registration.user)
+        )
         .where(Registration.id == registration.id)
     )
     reg_loaded = (await db.execute(stmt)).scalar_one()

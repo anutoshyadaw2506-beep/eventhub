@@ -70,14 +70,8 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/ticket/:id"
-                element={
-                  <ProtectedRoute>
-                    <TicketViewPage />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Digital Pass / Ticket View (Public for Attendees) */}
+              <Route path="/ticket/:id" element={<TicketViewPage />} />
 
               {/* Organiser Protected Routes */}
               <Route
