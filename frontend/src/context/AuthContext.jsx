@@ -82,6 +82,9 @@ export function AuthProvider({ children }) {
       },
     });
     if (error) throw error;
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      throw new Error('This email address is already registered. Please sign in with your password, or use a different email.');
+    }
     return data;
   };
 
