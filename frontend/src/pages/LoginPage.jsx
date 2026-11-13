@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, AlertCircle } from 'lucide-react';
+import { Calendar, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
+  const isConfirmed = searchParams.get('confirmed') === 'true';
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -45,6 +46,13 @@ export default function LoginPage() {
           <span className="font-semibold block mb-0.5">Attending an event?</span>
           You don't need to sign in! Simply <Link to="/events" className="underline font-bold text-sky-700">browse events</Link>, book your ticket, and get your digital QR pass instantly.
         </div>
+
+        {isConfirmed && (
+          <div className="mb-5 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-800 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            <span>Your email has been verified! Please sign in with your credentials.</span>
+          </div>
+        )}
 
         {error && (
           <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-center gap-2">

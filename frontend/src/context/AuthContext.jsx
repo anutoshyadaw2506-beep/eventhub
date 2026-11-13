@@ -75,6 +75,7 @@ export function AuthProvider({ children }) {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/login?confirmed=true`,
         data: {
           full_name: fullName,
           role: role,
