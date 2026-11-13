@@ -239,7 +239,7 @@ export default function CreateEventPage() {
             <div className="flex items-center gap-4">
               <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition">
                 <UploadCloud className="w-4 h-4 text-purple-600" />
-                {uploadingImage ? 'Uploading to Supabase...' : 'Choose File'}
+                {uploadingImage ? 'Uploading poster...' : 'Choose File'}
                 <input
                   type="file"
                   accept="image/*"

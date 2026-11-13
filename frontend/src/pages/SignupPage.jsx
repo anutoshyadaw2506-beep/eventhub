@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Lock, Mail, User, ShieldCheck, AlertCircle, Zap, Github } from 'lucide-react';
+import { Calendar, Lock, Mail, User, ShieldCheck, AlertCircle, Zap, Github, ArrowRight } from 'lucide-react';
 
 export default function SignupPage() {
   const [searchParams] = useSearchParams();
@@ -25,7 +25,7 @@ export default function SignupPage() {
       await signup(email, password, fullName, role);
       navigate(redirect);
     } catch (err) {
-      setError(err.message || 'Failed to create account with Supabase Auth.');
+      setError(err.message || 'Failed to create account.');
     } finally {
       setLoading(false);
     }
@@ -49,44 +49,45 @@ export default function SignupPage() {
     try {
       await loginWithGithub();
     } catch (err) {
-      setError(err.message || 'GitHub OAuth failed.');
+      setError(err.message || 'GitHub authentication failed.');
     }
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-xl">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-slate-50/70">
+      <div className="max-w-md w-full bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-xl shadow-slate-200/50">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center mx-auto mb-3 shadow-md shadow-purple-200">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center mx-auto mb-3 shadow-lg shadow-purple-500/25">
             <Calendar className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-900">Create Account</h2>
-          <div className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold">
-            <ShieldCheck className="w-3.5 h-3.5" /> Powered by Supabase Auth
-          </div>
+          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Create Your Account</h2>
+          <p className="text-xs text-slate-500 mt-1">Get instant access to events and digital passes</p>
         </div>
 
         {/* 1-Click Demo Login Banner */}
-        <div className="mb-6 p-3.5 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl">
-          <p className="text-[11px] font-bold text-purple-900 flex items-center gap-1 mb-2.5">
-            <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Instant 1-Click Demo Login:
-          </p>
+        <div className="mb-6 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl">
+          <div className="flex items-center justify-between mb-2.5">
+            <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Instant Demo Access:
+            </span>
+            <span className="text-[10px] text-slate-400 font-semibold">1-Click</span>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => handleQuickDemo('organiser@eventhub.com', 'Password123!')}
               disabled={loading}
-              className="py-2 px-2.5 bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold rounded-xl transition shadow-sm text-center"
+              className="py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition shadow-sm text-center flex items-center justify-center gap-1.5"
             >
-              👑 Organiser Demo
+              Organiser Pass
             </button>
             <button
               type="button"
               onClick={() => handleQuickDemo('participant@eventhub.com', 'Password123!')}
               disabled={loading}
-              className="py-2 px-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-[11px] font-bold rounded-xl transition shadow-sm text-center"
+              className="py-2.5 px-3 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold rounded-xl transition shadow-sm text-center flex items-center justify-center gap-1.5"
             >
-              🎟️ Participant Demo
+              Attendee Pass
             </button>
           </div>
         </div>
@@ -100,39 +101,39 @@ export default function SignupPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Full Name</label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Jane Doe"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                placeholder="name@company.com"
+                className="w-full bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
                 type="password"
                 required
@@ -140,7 +141,7 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="At least 6 characters"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-3 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white"
+                className="w-full bg-slate-50/70 border border-slate-200 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:bg-white transition"
               />
             </div>
           </div>
@@ -152,13 +153,13 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => setRole('participant')}
-                className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition ${
+                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition ${
                   role === 'participant'
-                    ? 'border-purple-600 bg-purple-50/60 ring-2 ring-purple-600/20'
+                    ? 'border-purple-600 bg-purple-50/70 ring-2 ring-purple-600/20'
                     : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                <div className={`p-1 rounded-md ${role === 'participant' ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                <div className={`p-1.5 rounded-lg ${role === 'participant' ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
                   <User className="w-3.5 h-3.5" />
                 </div>
                 <div>
@@ -170,13 +171,13 @@ export default function SignupPage() {
               <button
                 type="button"
                 onClick={() => setRole('organiser')}
-                className={`p-3 rounded-xl border text-left flex items-start gap-2.5 transition ${
+                className={`p-3 rounded-2xl border text-left flex items-start gap-2.5 transition ${
                   role === 'organiser'
-                    ? 'border-purple-600 bg-purple-50/60 ring-2 ring-purple-600/20'
+                    ? 'border-purple-600 bg-purple-50/70 ring-2 ring-purple-600/20'
                     : 'border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                <div className={`p-1 rounded-md ${role === 'organiser' ? 'bg-purple-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                <div className={`p-1.5 rounded-lg ${role === 'organiser' ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
                   <ShieldCheck className="w-3.5 h-3.5" />
                 </div>
                 <div>
@@ -190,9 +191,10 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center justify-center gap-2"
+            className="w-full mt-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/25 transition flex items-center justify-center gap-2"
           >
-            {loading ? 'Creating account in Supabase...' : 'Create Supabase Account'}
+            {loading ? 'Creating account...' : 'Create Account'}
+            {!loading && <ArrowRight className="w-4 h-4" />}
           </button>
         </form>
 
@@ -202,7 +204,7 @@ export default function SignupPage() {
             <div className="w-full border-t border-slate-200"></div>
           </div>
           <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400">
-            <span className="bg-white px-2">Or continue with</span>
+            <span className="bg-white px-3">Or continue with</span>
           </div>
         </div>
 
@@ -210,9 +212,9 @@ export default function SignupPage() {
         <button
           type="button"
           onClick={handleGithub}
-          className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2"
+          className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
         >
-          <Github className="w-4 h-4" /> GitHub via Supabase
+          <Github className="w-4 h-4" /> Continue with GitHub
         </button>
 
         <div className="mt-8 text-center text-xs text-slate-500">
