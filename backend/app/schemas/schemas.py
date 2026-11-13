@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -41,6 +41,7 @@ class EventBase(BaseModel):
     fee: Decimal = Decimal("0.00")
     banner_url: Optional[str] = None
     category_id: Optional[int] = None
+    custom_fields: Optional[List[Dict[str, Any]]] = None
 
 class EventCreate(EventBase):
     pass
@@ -56,6 +57,7 @@ class EventUpdate(BaseModel):
     fee: Optional[Decimal] = None
     banner_url: Optional[str] = None
     category_id: Optional[int] = None
+    custom_fields: Optional[List[Dict[str, Any]]] = None
     status: Optional[str] = None
 
 class EventResponse(EventBase):
@@ -69,12 +71,16 @@ class EventResponse(EventBase):
     model_config = ConfigDict(from_attributes=True)
 
 # Registration & Ticket Schemas
+class RegistrationCreate(BaseModel):
+    form_responses: Optional[Dict[str, Any]] = None
+
 class RegistrationResponse(BaseModel):
     id: UUID
     user_id: UUID
     event_id: UUID
     status: str
     registered_at: datetime
+    form_responses: Optional[Dict[str, Any]] = None
     event: Optional[EventResponse] = None
     is_checked_in: bool = False
     model_config = ConfigDict(from_attributes=True)
@@ -124,3 +130,4 @@ class ParticipantRegistrationItem(BaseModel):
     status: str
     is_checked_in: bool
     checked_in_at: Optional[datetime] = None
+    form_responses: Optional[Dict[str, Any]] = None

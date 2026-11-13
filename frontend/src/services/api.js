@@ -70,7 +70,10 @@ export const api = {
   deleteEvent: (id) => request(`/events/${id}`, { method: 'DELETE' }),
 
   // Registrations & Ticketing
-  registerForEvent: (eventId) => request(`/events/${eventId}/register`, { method: 'POST' }),
+  registerForEvent: (eventId, formResponses = {}) => request(`/events/${eventId}/register`, {
+    method: 'POST',
+    body: JSON.stringify({ form_responses: formResponses }),
+  }),
   getMyRegistrations: () => request('/me/registrations'),
   cancelRegistration: (registrationId) => request(`/registrations/${registrationId}/cancel`, { method: 'POST' }),
   getTicket: (registrationId) => request(`/tickets/${registrationId}`),

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, AlertCircle, UploadCloud } from 'lucide-react';
+import { ArrowLeft, AlertCircle, UploadCloud, Plus, Trash2, ListPlus } from 'lucide-react';
 import { api } from '../services/api';
 import { supabase } from '../services/supabase';
 
@@ -22,6 +22,12 @@ export default function CreateEventPage() {
     fee: 0.00,
     banner_url: '',
   });
+
+  const [customFields, setCustomFields] = useState([
+    { id: 'phone', label: 'Phone Number', type: 'text', required: true },
+    { id: 'org', label: 'College / Organization', type: 'text', required: false },
+  ]);
+  const [newQuestionLabel, setNewQuestionLabel] = useState('');
 
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -84,6 +90,7 @@ export default function CreateEventPage() {
         start_time: new Date(formData.start_time).toISOString(),
         end_time: new Date(formData.end_time).toISOString(),
         registration_deadline: new Date(formData.registration_deadline).toISOString(),
+        custom_fields: customFields,
       };
 
       await api.createEvent(payload);
@@ -256,6 +263,167 @@ export default function CreateEventPage() {
                 className="mt-3 w-40 h-24 object-cover rounded-lg border border-slate-200"
               />
             )}
+          </div>
+
+          {/* Custom Attendee Registration Form Builder */}
+          <div className="pt-4 border-t border-slate-200">
+            <div className="flex items-center gap-2 mb-1">
+              <ListPlus className="w-4 h-4 text-sky-600" />
+              <label className="text-xs font-bold text-slate-800">
+                Attendee Registration Form (Custom Questions)
+              </label>
+            </div>
+            <p className="text-[11px] text-slate-500 mb-3">
+              Customize what information members must provide when registering. You can view and export these responses.
+            </p>
+
+            {/* Quick Presets */}
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              <span className="text-[11px] text-slate-400 self-center mr-1">Quick add:</span>
+              {[
+                'Phone Number',
+                'College / Organization',
+                'Student ID / Roll No',
+                'T-Shirt Size',
+                'LinkedIn Profile',
+                'Emergency Contact',
+              ].map((preset) => {
+                const alreadyAdded = customFields.some((f) => f.label.toLowerCase() === preset.toLowerCase());
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    disabled={alreadyAdded}
+                    onClick={() => {
+                      if (!alreadyAdded) {
+                        setCustomFields([
+                          ...customFields,
+                          {
+                            id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                            label: preset,
+                            type: 'text',
+                            required: true,
+                          },
+                        ]);
+                      }
+                    }}
+                    className={`text-[11px] px-2.5 py-1 rounded-md font-medium border transition ${
+                      alreadyAdded
+                        ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                        : 'bg-white hover:bg-sky-50 text-slate-700 border-slate-300 hover:border-sky-300 hover:text-sky-700'
+                    }`}
+                  >
+                    + {preset}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Existing Questions List */}
+            {customFields.length > 0 ? (
+              <div className="space-y-2 mb-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                {customFields.map((field, idx) => (
+                  <div
+                    key={field.id || idx}
+                    className="flex items-center justify-between gap-3 bg-white p-2.5 rounded-md border border-slate-200 text-xs"
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <span className="text-slate-400 font-mono text-[11px]">{idx + 1}.</span>
+                      <input
+                        type="text"
+                        value={field.label}
+                        onChange={(e) => {
+                          const updated = [...customFields];
+                          updated[idx].label = e.target.value;
+                          setCustomFields(updated);
+                        }}
+                        className="flex-1 bg-transparent font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-sky-500 rounded px-1.5 py-0.5"
+                        placeholder="Question label"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-4 shrink-0">
+                      <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={field.required}
+                          onChange={(e) => {
+                            const updated = [...customFields];
+                            updated[idx].required = e.target.checked;
+                            setCustomFields(updated);
+                          }}
+                          className="w-3.5 h-3.5 text-sky-600 rounded border-slate-300 focus:ring-sky-500"
+                        />
+                        Required
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomFields(customFields.filter((_, i) => i !== idx));
+                        }}
+                        className="text-slate-400 hover:text-red-600 transition"
+                        title="Remove question"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-3 mb-3 bg-slate-50 rounded-lg border border-dashed border-slate-300 text-center text-xs text-slate-400">
+                No custom questions added yet. Attendees will register with standard account info.
+              </div>
+            )}
+
+            {/* Add Custom Question Input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newQuestionLabel}
+                onChange={(e) => setNewQuestionLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newQuestionLabel.trim()) {
+                      setCustomFields([
+                        ...customFields,
+                        {
+                          id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                          label: newQuestionLabel.trim(),
+                          type: 'text',
+                          required: false,
+                        },
+                      ]);
+                      setNewQuestionLabel('');
+                    }
+                  }
+                }}
+                placeholder="Type custom question (e.g. 'GitHub Profile' or 'Dietary preference')..."
+                className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newQuestionLabel.trim()) {
+                    setCustomFields([
+                      ...customFields,
+                      {
+                        id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                        label: newQuestionLabel.trim(),
+                        type: 'text',
+                        required: false,
+                      },
+                    ]);
+                    setNewQuestionLabel('');
+                  }
+                }}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition inline-flex items-center gap-1 shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Question
+              </button>
+            </div>
           </div>
 
           <button

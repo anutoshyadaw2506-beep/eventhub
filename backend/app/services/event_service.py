@@ -12,7 +12,8 @@ from app.services.qr_service import generate_ticket_token
 async def register_participant_atomic(
     db: AsyncSession,
     user_id: uuid.UUID,
-    event_id: uuid.UUID
+    event_id: uuid.UUID,
+    form_responses: Optional[Dict[str, Any]] = None
 ) -> Registration:
     """
     Atomically registers a participant for an event, enforcing:
@@ -74,6 +75,8 @@ async def register_participant_atomic(
             existing_reg.status = "confirmed"
             existing_reg.ticket_token = generate_ticket_token()
             existing_reg.registered_at = now
+            if form_responses:
+                existing_reg.form_responses = form_responses
             await db.commit()
             await db.refresh(existing_reg)
             return existing_reg
@@ -95,6 +98,7 @@ async def register_participant_atomic(
         event_id=event_id,
         status="confirmed",
         ticket_token=generate_ticket_token(),
+        form_responses=form_responses or {},
         registered_at=now
     )
     db.add(new_reg)

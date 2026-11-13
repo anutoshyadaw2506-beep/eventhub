@@ -1,7 +1,7 @@
 import csv
 import io
 import uuid
-from typing import List
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -11,6 +11,7 @@ from app.database.session import get_db
 from app.core.security import get_current_user
 from app.models.models import Event, Registration, Profile, Attendance
 from app.schemas.schemas import (
+    RegistrationCreate,
     RegistrationResponse,
     TicketResponse,
     EventAnalyticsResponse,
@@ -24,11 +25,13 @@ router = APIRouter(tags=["Registrations & Ticketing"])
 @router.post("/events/{event_id}/register", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
 async def register_for_event(
     event_id: uuid.UUID,
+    reg_in: Optional[RegistrationCreate] = None,
     current_user: Profile = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Registers the logged-in user for an event, returning confirmed registration."""
-    registration = await register_participant_atomic(db, current_user.id, event_id)
+    responses = reg_in.form_responses if reg_in else None
+    registration = await register_participant_atomic(db, current_user.id, event_id, form_responses=responses)
     
     # Reload with relations
     stmt = (
@@ -178,6 +181,10 @@ async def list_event_participants(
     regs = result.scalars().all()
 
     items = []
+    custom_field_keys = []
+    if event.custom_fields and isinstance(event.custom_fields, list):
+        custom_field_keys = [f.get("label", f.get("id")) for f in event.custom_fields if isinstance(f, dict)]
+
     for r in regs:
         items.append(ParticipantRegistrationItem(
             registration_id=r.id,
@@ -186,15 +193,20 @@ async def list_event_participants(
             registered_at=r.registered_at,
             status=r.status,
             is_checked_in=r.attendance is not None,
-            checked_in_at=r.attendance.checked_in_at if r.attendance else None
+            checked_in_at=r.attendance.checked_in_at if r.attendance else None,
+            form_responses=r.form_responses or {}
         ))
 
     if format.lower() == "csv":
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["Registration ID", "User ID", "Participant Name", "Registration Date (UTC)", "Status", "Checked In", "Check-in Date (UTC)"])
+        
+        headers = ["Registration ID", "User ID", "Participant Name", "Registration Date (UTC)", "Status", "Checked In", "Check-in Date (UTC)"]
+        headers.extend(custom_field_keys)
+        writer.writerow(headers)
+
         for item in items:
-            writer.writerow([
+            row = [
                 str(item.registration_id),
                 str(item.user_id),
                 item.participant_name,
@@ -202,7 +214,12 @@ async def list_event_participants(
                 item.status,
                 "YES" if item.is_checked_in else "NO",
                 item.checked_in_at.strftime("%Y-%m-%d %H:%M:%S") if item.checked_in_at else "N/A"
-            ])
+            ]
+            responses = item.form_responses or {}
+            for k in custom_field_keys:
+                row.append(str(responses.get(k, "")))
+            writer.writerow(row)
+
         csv_content = output.getvalue()
         return Response(
             content=csv_content,

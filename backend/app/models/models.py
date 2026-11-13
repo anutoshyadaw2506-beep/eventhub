@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Integer, Numeric, DateTime, ForeignKey, BigInteger, func, UniqueConstraint
+from sqlalchemy import Column, String, Text, Integer, Numeric, DateTime, ForeignKey, BigInteger, func, UniqueConstraint, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.database.session import Base
@@ -40,6 +40,7 @@ class Event(Base):
     registration_deadline = Column(DateTime(timezone=True), nullable=False)
     fee = Column(Numeric(10, 2), nullable=False, default=0.00)
     banner_url = Column(String, nullable=True)
+    custom_fields = Column(JSON, default=list) # [{id, label, type, required}]
     status = Column(String, nullable=False, default="draft") # draft, published, closed, completed, cancelled
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -55,6 +56,7 @@ class Registration(Base):
     event_id = Column(UUID(as_uuid=True), ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
     status = Column(String, nullable=False, default="confirmed") # confirmed, cancelled
     ticket_token = Column(String, unique=True, nullable=False, index=True)
+    form_responses = Column(JSON, default=dict)
     registered_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("Profile", back_populates="registrations")

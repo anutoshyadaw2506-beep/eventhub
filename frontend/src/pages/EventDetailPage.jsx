@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Shield, ArrowRight } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Shield, ArrowRight, X } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,6 +15,8 @@ export default function EventDetailPage() {
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [formResponses, setFormResponses] = useState({});
 
   useEffect(() => {
     loadEventAndRegistration();
@@ -40,22 +42,31 @@ export default function EventDetailPage() {
     }
   };
 
-  const handleRegister = async () => {
+  const handleRegisterClick = () => {
     if (!user) {
       navigate(`/login?redirect=/events/${id}`);
       return;
     }
 
+    if (event?.custom_fields && Array.isArray(event.custom_fields) && event.custom_fields.length > 0) {
+      setShowModal(true);
+    } else {
+      submitRegistration({});
+    }
+  };
+
+  const submitRegistration = async (responses = {}) => {
     setRegistering(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const reg = await api.registerForEvent(id);
+      const reg = await api.registerForEvent(id, responses);
+      setShowModal(false);
       setSuccess('Registration confirmed! Generating your digital QR ticket...');
       setTimeout(() => {
         navigate(`/ticket/${reg.id}`);
-      }, 800);
+      }, 700);
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes('already registered')) {
         const myRegs = await api.getMyRegistrations();
@@ -63,6 +74,7 @@ export default function EventDetailPage() {
         if (found) {
           setExistingRegistration(found);
           setError(null);
+          setShowModal(false);
           return;
         }
       }
@@ -265,7 +277,7 @@ export default function EventDetailPage() {
               </button>
             ) : (
               <button
-                onClick={handleRegister}
+                onClick={handleRegisterClick}
                 disabled={registering}
                 className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg transition shadow-sm flex items-center justify-center gap-2"
               >
@@ -280,6 +292,74 @@ export default function EventDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal for Custom Registration Questions */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 border border-slate-200 shadow-xl relative animate-in fade-in">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Registration Details</h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">Please provide required details for the organiser</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitRegistration(formResponses);
+              }}
+              className="space-y-3.5 mt-4"
+            >
+              {event?.custom_fields?.map((field) => (
+                <div key={field.id || field.label}>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    {field.label} {field.required && <span className="text-red-500">*</span>}
+                  </label>
+                  <input
+                    type={field.type || 'text'}
+                    required={field.required}
+                    value={formResponses[field.label] || ''}
+                    onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })}
+                    placeholder={`Enter your ${field.label.toLowerCase()}`}
+                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                </div>
+              ))}
+
+              {error && (
+                <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={registering}
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-medium text-xs rounded-lg transition"
+                >
+                  {registering ? 'Processing...' : 'Confirm Registration'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

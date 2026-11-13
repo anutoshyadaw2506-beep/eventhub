@@ -71,6 +71,10 @@ export default function EventAnalyticsPage() {
     );
   }
 
+  const customLabels = Array.from(
+    new Set(participants.flatMap((p) => Object.keys(p.form_responses || {})))
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <Link to="/organiser" className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 mb-6 transition">
@@ -156,6 +160,11 @@ export default function EventAnalyticsPage() {
                 <tr>
                   <th className="py-2.5 px-4">Participant</th>
                   <th className="py-2.5 px-4">Registration Date</th>
+                  {customLabels.map((lbl) => (
+                    <th key={lbl} className="py-2.5 px-4 text-sky-800 bg-sky-50/60 font-semibold">
+                      {lbl}
+                    </th>
+                  ))}
                   <th className="py-2.5 px-4">Status</th>
                   <th className="py-2.5 px-4">Check-In Status</th>
                   <th className="py-2.5 px-4">Check-In Time</th>
@@ -168,6 +177,11 @@ export default function EventAnalyticsPage() {
                     <td className="py-3 px-4 text-slate-500">
                       {new Date(p.registered_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                     </td>
+                    {customLabels.map((lbl) => (
+                      <td key={lbl} className="py-3 px-4 text-slate-700 font-medium">
+                        {p.form_responses?.[lbl] ? String(p.form_responses[lbl]) : '—'}
+                      </td>
+                    ))}
                     <td className="py-3 px-4">
                       <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-medium uppercase">
                         {p.status}
