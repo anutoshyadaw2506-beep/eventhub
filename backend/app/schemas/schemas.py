@@ -72,14 +72,22 @@ class EventResponse(EventBase):
 
 # Registration & Ticket Schemas
 class RegistrationCreate(BaseModel):
+    attendee_name: Optional[str] = None
+    attendee_email: Optional[str] = None
     form_responses: Optional[Dict[str, Any]] = None
+    payment_id: Optional[str] = None
+    amount_paid: Optional[float] = 0.0
 
 class RegistrationResponse(BaseModel):
     id: UUID
-    user_id: UUID
+    user_id: Optional[UUID] = None
     event_id: UUID
     status: str
     registered_at: datetime
+    attendee_name: Optional[str] = None
+    attendee_email: Optional[str] = None
+    payment_status: Optional[str] = "free"
+    amount_paid: Optional[float] = 0.0
     form_responses: Optional[Dict[str, Any]] = None
     event: Optional[EventResponse] = None
     is_checked_in: bool = False
@@ -94,6 +102,10 @@ class TicketResponse(BaseModel):
     start_time: datetime
     end_time: datetime
     participant_name: str
+    attendee_email: Optional[str] = None
+    payment_status: Optional[str] = "free"
+    amount_paid: Optional[float] = 0.0
+    fee: Optional[float] = 0.0
     status: str
     is_checked_in: bool
     checked_in_at: Optional[datetime] = None
@@ -124,8 +136,11 @@ class EventAnalyticsResponse(BaseModel):
 
 class ParticipantRegistrationItem(BaseModel):
     registration_id: UUID
-    user_id: UUID
+    user_id: Optional[UUID] = None
     participant_name: str
+    attendee_email: Optional[str] = None
+    payment_status: Optional[str] = "free"
+    amount_paid: Optional[float] = 0.0
     registered_at: datetime
     status: str
     is_checked_in: bool

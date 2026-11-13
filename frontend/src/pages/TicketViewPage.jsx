@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, MapPin, CheckCircle2, Clock, ArrowLeft, Printer, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle2, Clock, ArrowLeft, Printer, AlertCircle, CreditCard, Mail, Download } from 'lucide-react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function TicketViewPage() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,8 +41,8 @@ export default function TicketViewPage() {
         <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
         <h2 className="text-lg font-bold text-slate-900">Ticket Not Available</h2>
         <p className="text-xs text-slate-500 mt-1">{error || 'Unable to view ticket'}</p>
-        <Link to="/my-tickets" className="mt-4 inline-block text-xs font-semibold text-sky-600 hover:text-sky-700">
-          ← Back to My Tickets
+        <Link to="/events" className="mt-4 inline-block text-xs font-semibold text-sky-600 hover:text-sky-700">
+          ← Back to Events
         </Link>
       </div>
     );
@@ -51,14 +53,17 @@ export default function TicketViewPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-5 print:hidden">
-        <Link to="/my-tickets" className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition">
-          <ArrowLeft className="w-4 h-4" /> My Tickets
+        <Link
+          to={user ? "/my-tickets" : "/events"}
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition"
+        >
+          <ArrowLeft className="w-4 h-4" /> {user ? "My Passes" : "Back to Events"}
         </Link>
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium transition"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-medium transition shadow-xs"
         >
-          <Printer className="w-4 h-4" /> Print Ticket
+          <Printer className="w-4 h-4" /> Print / Save Pass
         </button>
       </div>
 
@@ -95,7 +100,7 @@ export default function TicketViewPage() {
             {ticket.ticket_token.slice(0, 16)}••••••••
           </p>
           <p className="text-xs text-slate-500 mt-2 font-medium">
-            Present this QR code to the organiser at the venue entrance.
+            Present this QR pass on your phone to the organiser at the door.
           </p>
         </div>
 
@@ -111,6 +116,26 @@ export default function TicketViewPage() {
               <p className="font-mono text-slate-700 text-[11px] mt-0.5">
                 EH-{ticket.registration_id.slice(0, 8).toUpperCase()}
               </p>
+            </div>
+          </div>
+
+          {ticket.attendee_email && (
+            <div className="flex items-start gap-2.5 pb-2 border-b border-slate-100">
+              <Mail className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-slate-900">{ticket.attendee_email}</p>
+                <p className="text-slate-400 text-[11px]">Registered Email</p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-start gap-2.5 pb-2 border-b border-slate-100">
+            <CreditCard className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-slate-900">
+                {ticket.payment_status === 'paid' ? `Paid (₹${Number(ticket.amount_paid).toFixed(2)})` : 'Free Admission'}
+              </p>
+              <p className="text-slate-400 text-[11px]">Admission Status</p>
             </div>
           </div>
 

@@ -52,8 +52,13 @@ class Registration(Base):
     __tablename__ = "registrations"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=True)
     event_id = Column(UUID(as_uuid=True), ForeignKey("events.id", ondelete="CASCADE"), nullable=False)
+    attendee_name = Column(String, nullable=False, default="")
+    attendee_email = Column(String, nullable=False, default="")
+    payment_status = Column(String, nullable=False, default="free") # free, paid
+    payment_id = Column(String, nullable=True)
+    amount_paid = Column(Numeric(10, 2), nullable=False, default=0.00)
     status = Column(String, nullable=False, default="confirmed") # confirmed, cancelled
     ticket_token = Column(String, unique=True, nullable=False, index=True)
     form_responses = Column(JSON, default=dict)
@@ -62,10 +67,6 @@ class Registration(Base):
     user = relationship("Profile", back_populates="registrations")
     event = relationship("Event", back_populates="registrations")
     attendance = relationship("Attendance", back_populates="registration", uselist=False, cascade="all, delete-orphan")
-
-    __table_args__ = (
-        UniqueConstraint("user_id", "event_id", name="uq_user_event_registration"),
-    )
 
 class Attendance(Base):
     __tablename__ = "attendance"

@@ -101,3 +101,14 @@ def require_role(allowed_roles: List[str]):
             )
         return current_user
     return role_checker
+
+async def get_optional_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> Optional[Profile]:
+    if not credentials:
+        return None
+    try:
+        return await get_current_user(credentials, db)
+    except Exception:
+        return None

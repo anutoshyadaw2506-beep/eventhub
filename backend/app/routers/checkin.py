@@ -37,11 +37,13 @@ async def checkin_ticket_scan(
         staff_user_id=current_user.id
     )
 
+    p_name = registration.attendee_name or (registration.user.full_name if registration.user else "Attendee")
+
     return CheckInResponse(
         success=True,
-        message=f"Check-in successful! Welcome {registration.user.full_name}",
+        message=f"Check-in successful! Welcome {p_name}",
         registration_id=registration.id,
-        participant_name=registration.user.full_name,
+        participant_name=p_name,
         checked_in_at=attendance.checked_in_at,
         is_duplicate=False
     )

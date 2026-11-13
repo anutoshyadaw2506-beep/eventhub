@@ -8,7 +8,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.orm import selectinload
 
 from app.database.session import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_optional_current_user
 from app.models.models import Event, Registration, Profile, Attendance
 from app.schemas.schemas import (
     RegistrationCreate,
@@ -26,12 +26,33 @@ router = APIRouter(tags=["Registrations & Ticketing"])
 async def register_for_event(
     event_id: uuid.UUID,
     reg_in: Optional[RegistrationCreate] = None,
-    current_user: Profile = Depends(get_current_user),
+    current_user: Optional[Profile] = Depends(get_optional_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Registers the logged-in user for an event, returning confirmed registration."""
+    """
+    Registers an attendee (logged in user or guest) for an event, returning confirmed registration.
+    No login required for attendees.
+    """
+    attendee_name = (reg_in.attendee_name.strip() if reg_in and reg_in.attendee_name else "")
+    attendee_email = (reg_in.attendee_email.strip().lower() if reg_in and reg_in.attendee_email else "")
     responses = reg_in.form_responses if reg_in else None
-    registration = await register_participant_atomic(db, current_user.id, event_id, form_responses=responses)
+    payment_id = reg_in.payment_id if reg_in else None
+    amount_paid = reg_in.amount_paid if reg_in and reg_in.amount_paid else 0.0
+
+    user_id = current_user.id if current_user else None
+    if current_user and not attendee_name:
+        attendee_name = current_user.full_name
+
+    registration = await register_participant_atomic(
+        db,
+        user_id=user_id,
+        event_id=event_id,
+        attendee_name=attendee_name,
+        attendee_email=attendee_email,
+        form_responses=responses,
+        payment_id=payment_id,
+        amount_paid=amount_paid
+    )
     
     # Reload with relations
     stmt = (
@@ -96,12 +117,11 @@ async def cancel_registration(
 @router.get("/tickets/{registration_id}", response_model=TicketResponse)
 async def get_ticket_details(
     registration_id: uuid.UUID,
-    current_user: Profile = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Returns ticket details including generated QR code image (Base64 data URL).
-    Accessible by ticket owner, event organiser, or admin.
+    Publicly accessible via ticket ID/token.
     """
     stmt = (
         select(Registration)
@@ -116,14 +136,8 @@ async def get_ticket_details(
     if not registration:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found")
 
-    is_owner = registration.user_id == current_user.id
-    is_event_organiser = registration.event.organiser_id == current_user.id
-    is_admin = current_user.role == "admin"
-
-    if not (is_owner or is_event_organiser or is_admin):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this ticket")
-
     qr_image = generate_qr_code_data_url(registration.ticket_token)
+    p_name = registration.attendee_name or (registration.user.full_name if registration.user else "Attendee")
 
     return TicketResponse(
         registration_id=registration.id,
@@ -133,7 +147,11 @@ async def get_ticket_details(
         venue=registration.event.venue,
         start_time=registration.event.start_time,
         end_time=registration.event.end_time,
-        participant_name=registration.user.full_name,
+        participant_name=p_name,
+        attendee_email=registration.attendee_email,
+        payment_status=registration.payment_status or "free",
+        amount_paid=float(registration.amount_paid or 0.0),
+        fee=float(registration.event.fee or 0.0),
         status=registration.status,
         is_checked_in=registration.attendance is not None,
         checked_in_at=registration.attendance.checked_in_at if registration.attendance else None
@@ -186,10 +204,15 @@ async def list_event_participants(
         custom_field_keys = [f.get("label", f.get("id")) for f in event.custom_fields if isinstance(f, dict)]
 
     for r in regs:
+        p_name = r.attendee_name or (r.user.full_name if r.user else "Guest Attendee")
+        p_email = r.attendee_email or ""
         items.append(ParticipantRegistrationItem(
             registration_id=r.id,
             user_id=r.user_id,
-            participant_name=r.user.full_name,
+            participant_name=p_name,
+            attendee_email=p_email,
+            payment_status=r.payment_status or "free",
+            amount_paid=float(r.amount_paid or 0.0),
             registered_at=r.registered_at,
             status=r.status,
             is_checked_in=r.attendance is not None,
@@ -201,15 +224,18 @@ async def list_event_participants(
         output = io.StringIO()
         writer = csv.writer(output)
         
-        headers = ["Registration ID", "User ID", "Participant Name", "Registration Date (UTC)", "Status", "Checked In", "Check-in Date (UTC)"]
+        headers = ["Registration ID", "User ID", "Participant Name", "Email", "Payment Status", "Amount Paid (₹)", "Registration Date (UTC)", "Status", "Checked In", "Check-in Date (UTC)"]
         headers.extend(custom_field_keys)
         writer.writerow(headers)
 
         for item in items:
             row = [
                 str(item.registration_id),
-                str(item.user_id),
+                str(item.user_id or "Guest"),
                 item.participant_name,
+                item.attendee_email or "",
+                item.payment_status.upper(),
+                f"{item.amount_paid:.2f}",
                 item.registered_at.strftime("%Y-%m-%d %H:%M:%S"),
                 item.status,
                 "YES" if item.is_checked_in else "NO",

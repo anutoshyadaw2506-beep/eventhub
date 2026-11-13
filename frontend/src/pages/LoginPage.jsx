@@ -32,12 +32,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-slate-50">
       <div className="max-w-md w-full bg-white rounded-xl p-8 border border-slate-200 shadow-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="w-10 h-10 rounded-lg bg-sky-600 text-white flex items-center justify-center mx-auto mb-3">
             <Calendar className="w-5 h-5" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Sign in to EventHub</h2>
-          <p className="text-sm text-slate-500 mt-1">Enter your details to access your account</p>
+          <p className="text-xs text-slate-500 mt-1">Access your organiser dashboard & event tools</p>
+        </div>
+
+        {/* Notice for Attendees */}
+        <div className="mb-6 p-3 bg-sky-50 border border-sky-200 rounded-lg text-xs text-sky-800 leading-relaxed">
+          <span className="font-semibold block mb-0.5">Attending an event?</span>
+          You don't need to sign in! Simply <Link to="/events" className="underline font-bold text-sky-700">browse events</Link>, book your ticket, and get your digital QR pass instantly.
         </div>
 
         {error && (

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Shield, ArrowRight, X } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle2, AlertCircle, QrCode, Shield, ArrowRight, X, CreditCard, Smartphone, ShieldCheck } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function EventDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const [event, setEvent] = useState(null);
   const [existingRegistration, setExistingRegistration] = useState(null);
@@ -17,6 +17,21 @@ export default function EventDetailPage() {
   const [success, setSuccess] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [formResponses, setFormResponses] = useState({});
+
+  // Attendee Guest Info & Payment state
+  const [attendeeName, setAttendeeName] = useState('');
+  const [attendeeEmail, setAttendeeEmail] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [upiId, setUpiId] = useState('');
+
+  useEffect(() => {
+    if (profile?.full_name && !attendeeName) {
+      setAttendeeName(profile.full_name);
+    }
+    if (user?.email && !attendeeEmail) {
+      setAttendeeEmail(user.email);
+    }
+  }, [profile, user]);
 
   useEffect(() => {
     loadEventAndRegistration();
@@ -43,25 +58,38 @@ export default function EventDetailPage() {
   };
 
   const handleRegisterClick = () => {
-    if (!user) {
-      navigate(`/login?redirect=/events/${id}`);
+    // No login required! Simply open the registration modal
+    setError(null);
+    setShowModal(true);
+  };
+
+  const submitRegistration = async (e) => {
+    if (e) e.preventDefault();
+
+    if (!attendeeName.trim()) {
+      setError('Please enter your full name');
+      return;
+    }
+    if (!attendeeEmail.trim()) {
+      setError('Please enter your email address for ticket delivery');
       return;
     }
 
-    if (event?.custom_fields && Array.isArray(event.custom_fields) && event.custom_fields.length > 0) {
-      setShowModal(true);
-    } else {
-      submitRegistration({});
-    }
-  };
-
-  const submitRegistration = async (responses = {}) => {
     setRegistering(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const reg = await api.registerForEvent(id, responses);
+      const isPaid = Number(event?.fee || 0) > 0;
+      const payload = {
+        attendee_name: attendeeName.trim(),
+        attendee_email: attendeeEmail.trim().toLowerCase(),
+        form_responses: formResponses,
+        payment_id: isPaid ? `pay_mock_${Date.now()}_${Math.random().toString(36).substring(2, 7)}` : null,
+        amount_paid: isPaid ? Number(event.fee) : 0.0,
+      };
+
+      const reg = await api.registerForEvent(id, payload);
       setShowModal(false);
       setSuccess('Registration confirmed! Generating your digital QR ticket...');
       setTimeout(() => {
@@ -69,16 +97,10 @@ export default function EventDetailPage() {
       }, 700);
     } catch (err) {
       if (err.message && err.message.toLowerCase().includes('already registered')) {
-        const myRegs = await api.getMyRegistrations();
-        const found = myRegs.find((r) => r.event_id === id && r.status === 'confirmed');
-        if (found) {
-          setExistingRegistration(found);
-          setError(null);
-          setShowModal(false);
-          return;
-        }
+        setError('You are already registered for this event.');
+      } else {
+        setError(err.message || 'Registration failed');
       }
-      setError(err.message || 'Registration failed');
     } finally {
       setRegistering(false);
     }
@@ -281,79 +303,239 @@ export default function EventDetailPage() {
                 disabled={registering}
                 className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-lg transition shadow-sm flex items-center justify-center gap-2"
               >
-                {registering ? 'Processing...' : 'Register for Event'}
+                {Number(event.fee) > 0 ? `Book Pass (₹${event.fee})` : 'Register for Event (Free)'}
               </button>
             )}
 
             <div className="mt-3 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
               <Shield className="w-3.5 h-3.5 text-slate-400" />
-              <span>Instant digital QR pass issued</span>
+              <span>No account needed · Instant QR code issued</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal for Custom Registration Questions */}
+      {/* Modal for Attendee Registration & Payment */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 border border-slate-200 shadow-xl relative animate-in fade-in">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[92vh] flex flex-col border border-slate-200 shadow-xl relative animate-in fade-in">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">Registration Details</h3>
-                <p className="text-[11px] text-slate-500 mt-0.5">Please provide required details for the organiser</p>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {Number(event.fee) > 0 ? 'Book Pass & Checkout' : 'Complete Event Registration'}
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{event.title}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-600 transition"
+                className="text-slate-400 hover:text-slate-600 transition p-1 rounded-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                submitRegistration(formResponses);
-              }}
-              className="space-y-3.5 mt-4"
-            >
-              {event?.custom_fields?.map((field) => (
-                <div key={field.id || field.label}>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {field.label} {field.required && <span className="text-red-500">*</span>}
-                  </label>
-                  <input
-                    type={field.type || 'text'}
-                    required={field.required}
-                    value={formResponses[field.label] || ''}
-                    onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })}
-                    placeholder={`Enter your ${field.label.toLowerCase()}`}
-                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-              ))}
-
+            {/* Modal Body (Scrollable) */}
+            <form onSubmit={submitRegistration} className="p-5 overflow-y-auto space-y-4 flex-1">
               {error && (
-                <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
-                  {error}
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              {/* Attendee Details */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
+                  1. Attendee Information
+                </h4>
+                <div className="space-y-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={attendeeName}
+                      onChange={(e) => setAttendeeName(e.target.value)}
+                      placeholder="e.g. Alex Morgan"
+                      className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={attendeeEmail}
+                      onChange={(e) => setAttendeeEmail(e.target.value)}
+                      placeholder="e.g. alex@example.com"
+                      className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Your digital ticket and QR code pass will be registered under this email.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Custom Questions if configured */}
+              {event?.custom_fields && event.custom_fields.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
+                    2. Event Requirements
+                  </h4>
+                  <div className="space-y-3 bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                    {event.custom_fields.map((field) => (
+                      <div key={field.id || field.label}>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          {field.label} {field.required && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                          type={field.type || 'text'}
+                          required={field.required}
+                          value={formResponses[field.label] || ''}
+                          onChange={(e) => setFormResponses({ ...formResponses, [field.label]: e.target.value })}
+                          placeholder={`Enter your ${field.label.toLowerCase()}`}
+                          className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Section (if fee > 0) */}
+              {Number(event.fee) > 0 ? (
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2.5">
+                    3. Fee & Payment
+                  </h4>
+                  <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200 space-y-3">
+                    <div className="flex justify-between items-center bg-white p-3 rounded-lg border border-slate-200">
+                      <div>
+                        <span className="text-xs font-medium text-slate-600">Admission Fee</span>
+                        <p className="text-[11px] text-slate-400">Standard Attendee Pass</p>
+                      </div>
+                      <span className="text-base font-bold text-slate-900">₹{Number(event.fee).toFixed(2)}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('upi')}
+                        className={`py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                          paymentMethod === 'upi'
+                            ? 'border-sky-600 bg-sky-50 text-sky-700'
+                            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Smartphone className="w-3.5 h-3.5 text-sky-600" /> UPI / QR
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('card')}
+                        className={`py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition ${
+                          paymentMethod === 'card'
+                            ? 'border-sky-600 bg-sky-50 text-sky-700'
+                            : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <CreditCard className="w-3.5 h-3.5 text-sky-600" /> Card
+                      </button>
+                    </div>
+
+                    {paymentMethod === 'upi' ? (
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-semibold text-slate-600">Enter UPI ID</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={upiId}
+                            onChange={(e) => setUpiId(e.target.value)}
+                            placeholder="username@okhdfcbank"
+                            className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setUpiId(`${attendeeName ? attendeeName.toLowerCase().replace(/\s+/g, '') : 'attendee'}@upi`)}
+                            className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-[11px] font-medium transition shrink-0"
+                          >
+                            Auto-Fill
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1">Card Number</label>
+                          <input
+                            type="text"
+                            defaultValue="4242 •••• •••• 4242"
+                            readOnly
+                            className="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 font-mono"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-600 mb-1">Expires</label>
+                            <input
+                              type="text"
+                              defaultValue="12/28"
+                              readOnly
+                              className="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-600 mb-1">CVV</label>
+                            <input
+                              type="password"
+                              defaultValue="123"
+                              readOnly
+                              className="w-full bg-slate-100 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 font-mono"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Instant confirmation & QR token generation</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-sky-50 p-3 rounded-lg border border-sky-200 flex items-center justify-between text-xs text-sky-800">
+                  <span className="font-semibold">Admission: Free of Charge</span>
+                  <span className="bg-sky-600 text-white text-[11px] font-bold px-2 py-0.5 rounded">₹0.00</span>
+                </div>
+              )}
+
+              {/* Modal Footer Controls */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
+                  className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={registering}
-                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-medium text-xs rounded-lg transition"
+                  className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs rounded-lg transition shadow-sm flex items-center gap-1.5"
                 >
-                  {registering ? 'Processing...' : 'Confirm Registration'}
+                  {registering
+                    ? 'Processing...'
+                    : Number(event.fee) > 0
+                    ? `Pay ₹${Number(event.fee).toFixed(2)} & Get Ticket`
+                    : 'Confirm Registration & Get Ticket'}
                 </button>
               </div>
             </form>

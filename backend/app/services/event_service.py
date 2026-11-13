@@ -11,16 +11,21 @@ from app.services.qr_service import generate_ticket_token
 
 async def register_participant_atomic(
     db: AsyncSession,
-    user_id: uuid.UUID,
+    user_id: Optional[uuid.UUID],
     event_id: uuid.UUID,
-    form_responses: Optional[Dict[str, Any]] = None
+    attendee_name: str = "",
+    attendee_email: str = "",
+    form_responses: Optional[Dict[str, Any]] = None,
+    payment_id: Optional[str] = None,
+    amount_paid: float = 0.0
 ) -> Registration:
     """
-    Atomically registers a participant for an event, enforcing:
+    Atomically registers a participant or guest for an event, enforcing:
     1. Event existence and published status
     2. Registration deadline hasn't passed
     3. Concurrency-safe capacity check using row-level locking (SELECT FOR UPDATE)
-    4. Duplicate registration prevention
+    4. Duplicate registration prevention (by user_id or attendee_email)
+    5. Automatic fee / payment recording
     """
     # 1. Lock the event row for update to ensure accurate capacity under concurrent requests
     stmt = (
@@ -50,36 +55,31 @@ async def register_participant_atomic(
             detail="Registration deadline has passed"
         )
 
-    # 2. Check if user already registered
-    existing_stmt = select(Registration).where(
-        and_(Registration.user_id == user_id, Registration.event_id == event_id)
-    )
-    existing_reg = (await db.execute(existing_stmt)).scalar_one_or_none()
-    if existing_reg:
-        if existing_reg.status == "confirmed":
+    # 2. Check if user/email already registered
+    if user_id:
+        existing_stmt = select(Registration).where(
+            and_(Registration.user_id == user_id, Registration.event_id == event_id)
+        )
+        existing_reg = (await db.execute(existing_stmt)).scalar_one_or_none()
+        if existing_reg and existing_reg.status == "confirmed":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You are already registered for this event"
             )
-        else:
-            # Reactivate previously cancelled registration
-            count_stmt = select(func.count(Registration.id)).where(
-                and_(Registration.event_id == event_id, Registration.status == "confirmed")
+    elif attendee_email:
+        existing_stmt = select(Registration).where(
+            and_(
+                Registration.event_id == event_id,
+                func.lower(Registration.attendee_email) == attendee_email.strip().lower(),
+                Registration.status == "confirmed"
             )
-            confirmed_count = (await db.execute(count_stmt)).scalar() or 0
-            if confirmed_count >= event.capacity:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Event has reached maximum capacity"
-                )
-            existing_reg.status = "confirmed"
-            existing_reg.ticket_token = generate_ticket_token()
-            existing_reg.registered_at = now
-            if form_responses:
-                existing_reg.form_responses = form_responses
-            await db.commit()
-            await db.refresh(existing_reg)
-            return existing_reg
+        )
+        existing_reg = (await db.execute(existing_stmt)).scalar_one_or_none()
+        if existing_reg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"An active registration already exists for {attendee_email}"
+            )
 
     # 3. Capacity check under locked event
     count_stmt = select(func.count(Registration.id)).where(
@@ -92,10 +92,21 @@ async def register_participant_atomic(
             detail=f"Event is full. Capacity of {event.capacity} reached."
         )
 
-    # 4. Create new registration with opaque ticket token
+    # 4. Fee & Payment processing
+    event_fee = float(event.fee or 0.0)
+    payment_status = "paid" if event_fee > 0 else "free"
+    actual_amount = event_fee if event_fee > 0 else 0.0
+    actual_payment_id = payment_id or (f"pay_mock_{uuid.uuid4().hex[:10]}" if event_fee > 0 else None)
+
+    # 5. Create new registration with opaque ticket token
     new_reg = Registration(
         user_id=user_id,
         event_id=event_id,
+        attendee_name=attendee_name.strip() if attendee_name else "Guest Attendee",
+        attendee_email=attendee_email.strip().lower() if attendee_email else "",
+        payment_status=payment_status,
+        payment_id=actual_payment_id,
+        amount_paid=actual_amount,
         status="confirmed",
         ticket_token=generate_ticket_token(),
         form_responses=form_responses or {},

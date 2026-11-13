@@ -159,6 +159,8 @@ export default function EventAnalyticsPage() {
               <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                 <tr>
                   <th className="py-2.5 px-4">Participant</th>
+                  <th className="py-2.5 px-4">Email</th>
+                  <th className="py-2.5 px-4">Payment</th>
                   <th className="py-2.5 px-4">Registration Date</th>
                   {customLabels.map((lbl) => (
                     <th key={lbl} className="py-2.5 px-4 text-sky-800 bg-sky-50/60 font-semibold">
@@ -174,6 +176,18 @@ export default function EventAnalyticsPage() {
                 {participants.map((p) => (
                   <tr key={p.registration_id} className="hover:bg-slate-50/50 transition">
                     <td className="py-3 px-4 font-semibold text-slate-900">{p.participant_name}</td>
+                    <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">{p.attendee_email || '—'}</td>
+                    <td className="py-3 px-4">
+                      {p.payment_status === 'paid' ? (
+                        <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-semibold">
+                          Paid (₹{Number(p.amount_paid || 0).toFixed(2)})
+                        </span>
+                      ) : (
+                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-medium">
+                          Free
+                        </span>
+                      )}
+                    </td>
                     <td className="py-3 px-4 text-slate-500">
                       {new Date(p.registered_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                     </td>

@@ -199,3 +199,55 @@ async def test_event_analytics_calculation(db_session: AsyncSession):
     assert analytics["no_shows"] == 1
     assert analytics["attendance_rate"] == 50.0
     assert analytics["capacity_utilisation"] == 20.0
+
+@pytest.mark.asyncio
+async def test_guest_registration_without_login_and_payment(db_session: AsyncSession):
+    organiser = Profile(id=uuid.uuid4(), full_name="Event Host", role="organiser")
+    db_session.add(organiser)
+    await db_session.commit()
+
+    event = Event(
+        id=uuid.uuid4(),
+        organiser_id=organiser.id,
+        title="Premium Workshop 2026",
+        description="Exclusive training",
+        venue="Lab 404",
+        start_time=datetime.now(timezone.utc) + timedelta(days=2),
+        end_time=datetime.now(timezone.utc) + timedelta(days=2, hours=4),
+        capacity=5,
+        registration_deadline=datetime.now(timezone.utc) + timedelta(days=1),
+        fee=499.00,
+        status="published"
+    )
+    db_session.add(event)
+    await db_session.commit()
+
+    # Guest registers with name, email and payment - NO user_id required
+    guest_reg = await register_participant_atomic(
+        db=db_session,
+        user_id=None,
+        event_id=event.id,
+        attendee_name="Guest Alex",
+        attendee_email="alex.guest@example.com",
+        form_responses={"Phone": "+919876543210"},
+        payment_id="pay_mock_12345",
+        amount_paid=499.00
+    )
+
+    assert guest_reg.status == "confirmed"
+    assert guest_reg.user_id is None
+    assert guest_reg.attendee_name == "Guest Alex"
+    assert guest_reg.attendee_email == "alex.guest@example.com"
+    assert guest_reg.payment_status == "paid"
+    assert float(guest_reg.amount_paid) == 499.00
+    assert guest_reg.ticket_token.startswith("TK-")
+
+    # Check that check-in works seamlessly for guest
+    reg_checked, att = await validate_and_checkin_ticket(
+        db=db_session,
+        ticket_token=guest_reg.ticket_token,
+        event_id=event.id,
+        staff_user_id=organiser.id
+    )
+    assert att is not None
+    assert reg_checked.id == guest_reg.id

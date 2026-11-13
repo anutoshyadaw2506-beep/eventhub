@@ -69,11 +69,16 @@ export const api = {
   publishEvent: (id) => request(`/events/${id}/publish`, { method: 'POST' }),
   deleteEvent: (id) => request(`/events/${id}`, { method: 'DELETE' }),
 
-  // Registrations & Ticketing
-  registerForEvent: (eventId, formResponses = {}) => request(`/events/${eventId}/register`, {
-    method: 'POST',
-    body: JSON.stringify({ form_responses: formResponses }),
-  }),
+  // Registrations & Ticketing (No login required for attendees)
+  registerForEvent: (eventId, payload = {}) => {
+    const body = (payload.attendee_name || payload.attendee_email || payload.form_responses)
+      ? payload
+      : { form_responses: payload };
+    return request(`/events/${eventId}/register`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  },
   getMyRegistrations: () => request('/me/registrations'),
   cancelRegistration: (registrationId) => request(`/registrations/${registrationId}/cancel`, { method: 'POST' }),
   getTicket: (registrationId) => request(`/tickets/${registrationId}`),
