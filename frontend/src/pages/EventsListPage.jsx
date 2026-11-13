@@ -1,0 +1,123 @@
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Search, Filter, Calendar } from 'lucide-react';
+import { api } from '../services/api';
+import EventCard from '../components/EventCard';
+
+export default function EventsListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [events, setEvents] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [category, setCategory] = useState(searchParams.get('category') || '');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    loadEvents();
+  }, [category]);
+
+  const loadCategories = async () => {
+    try {
+      const data = await api.getCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadEvents = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getEvents({
+        search: search || undefined,
+        category_slug: category || undefined,
+      });
+      setEvents(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    loadEvents();
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mb-8">
+        <h1 className="text-3xl font-extrabold text-slate-900">Explore Events</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Browse upcoming campus meetups, cultural events, hackathons, and sports activities.
+        </p>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm mb-8 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <form onSubmit={handleSearchSubmit} className="flex-1 w-full flex items-center bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+          <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, venue, keywords..."
+            className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
+          />
+          <button type="submit" className="text-xs font-semibold text-purple-600 hover:text-purple-700 ml-2">
+            Search
+          </button>
+        </form>
+
+        <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          <Filter className="w-4 h-4 text-slate-400 shrink-0" />
+          <button
+            onClick={() => setCategory('')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+              category === '' ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            All
+          </button>
+          {categories.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCategory(c.slug)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+                category === c.slug ? 'bg-purple-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Event Grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="bg-white rounded-2xl h-80 animate-pulse border border-slate-100" />
+          ))}
+        </div>
+      ) : events.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((e) => (
+            <EventCard key={e.id} event={e} />
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl p-16 text-center border border-slate-100 shadow-sm">
+          <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="font-bold text-slate-800">No events found</h3>
+          <p className="text-xs text-slate-400 mt-1">Try clearing your search filters to find more events.</p>
+        </div>
+      )}
+    </div>
+  );
+}
